@@ -116,7 +116,7 @@
                 if (!response.ok) throw new Error('提交失敗');
 
                 const result = await response.json();
-                setStatus(result.message || '提交成功', true);
+                setStatus(result.message || '提交完成', result.ok === true);
             } catch (error) {
                 setStatus('提交失敗，請稍後再試', false);
             }

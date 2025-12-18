@@ -1,14 +1,31 @@
-export async function onRequest(context) {
-    // 假資料
-    const fakeLeaderboard = [
-        { name: 'Alice', studentId: 'S12345', time: '2025-12-18 10:00' },
-        { name: 'Bob', studentId: 'S23456', time: '2025-12-18 10:05' },
-        { name: 'Charlie', studentId: 'S34567', time: '2025-12-18 10:10' },
-        { name: 'David', studentId: 'S45678', time: '2025-12-18 10:15' },
-        { name: 'Eve', studentId: 'S56789', time: '2025-12-18 10:20' }
-    ];
+const json = (obj, status = 200) =>
+  new Response(JSON.stringify(obj), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
 
-    return new Response(JSON.stringify({ ok: true, data: fakeLeaderboard }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+export async function onRequestGet({ env }) {
+  try {
+    // 只顯示已答對的人（first_correct_at != NULL），依最早答對時間排序
+    const { results } = await env.DB.prepare(`
+      SELECT
+        student_id AS studentId,
+        name,
+        datetime(first_correct_at, 'unixepoch', '+8 hours') AS time
+      FROM players
+      WHERE first_correct_at IS NOT NULL
+      ORDER BY first_correct_at ASC
+      LIMIT 50;
+    `).all();
+
+    return json({ ok: true, data: results });
+  } catch (e) {
+    return json({ ok: false, message: "leaderboard 查詢失敗" }, 500);
+  }
+}
+
+// 其他 method 一律擋掉
+export async function onRequest({ request }) {
+  if (request.method === "GET") return; // 交給 onRequestGet
+  return json({ ok: false, message: "Method not allowed" }, 405);
 }
