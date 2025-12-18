@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "polyglot-site",
+  "compatibility_date": "2025-12-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "polyglot-ctf",
+      "database_id": "3fe023fc-2014-45df-868a-4ad49f567357"
+    }
+  ]
+}

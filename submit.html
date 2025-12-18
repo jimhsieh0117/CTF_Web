@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提交 Flag</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>提交你的 Flag</h1>
+            <form id="submit-form">
+                <label for="name">姓名：</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="studentId">學號：</label>
+                <input type="text" id="studentId" name="studentId" required>
+
+                <label for="flag">Flag：</label>
+                <input type="text" id="flag" name="flag" required>
+
+                <button type="submit" class="button">送出</button>
+            </form>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div class="card">
+            <h2>排行榜</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>姓名</th>
+                        <th>學號</th>
+                        <th>時間</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard">
+                    <!-- 排行榜內容將由 JavaScript 動態生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function setStatus(message, isSuccess = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${isSuccess ? 'success' : 'error'}`;
+        }
+
+        function renderLeaderboard(data) {
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = ''; // 清空現有內容
+
+            data.forEach((entry, index) => {
+                const row = document.createElement('tr');
+
+                const rankCell = document.createElement('td');
+                rankCell.textContent = index + 1;
+                row.appendChild(rankCell);
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = entry.name;
+                row.appendChild(nameCell);
+
+                const studentIdCell = document.createElement('td');
+                studentIdCell.textContent = entry.studentId;
+                row.appendChild(studentIdCell);
+
+                const timeCell = document.createElement('td');
+                timeCell.textContent = entry.time;
+                row.appendChild(timeCell);
+
+                leaderboard.appendChild(row);
+            });
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                if (!response.ok) throw new Error('無法取得排行榜資料');
+
+                const result = await response.json();
+                if (!result.ok) throw new Error('排行榜資料格式錯誤');
+
+                renderLeaderboard(result.data);
+            } catch (error) {
+                const fakeData = [
+                    { name: 'Alice', studentId: 'S12345', time: '2025-12-18 10:00' },
+                    { name: 'Bob', studentId: 'S23456', time: '2025-12-18 10:05' },
+                    { name: 'Charlie', studentId: 'S34567', time: '2025-12-18 10:10' },
+                    { name: 'David', studentId: 'S45678', time: '2025-12-18 10:15' },
+                    { name: 'Eve', studentId: 'S56789', time: '2025-12-18 10:20' }
+                ];
+                renderLeaderboard(fakeData);
+                setStatus('後端未連線，顯示示範資料', false);
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const studentId = document.getElementById('studentId').value;
+            const flag = document.getElementById('flag').value;
+
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, studentId, flag })
+                });
+
+                if (!response.ok) throw new Error('提交失敗');
+
+                const result = await response.json();
+                setStatus(result.message || '提交成功', true);
+            } catch (error) {
+                setStatus('提交失敗，請稍後再試', false);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLeaderboard();
+            document.getElementById('submit-form').addEventListener('submit', handleSubmit);
+        });
+    </script>
+</body>
+</html>
