@@ -49,11 +49,31 @@ export async function onRequestPost({ request, env }) {
       return json({ ok: false, message: "Flag 過長" }, 400);
     }
 
+    // ===== 白名單設定（測試開關） =====
+    // 你要「開/關白名單限制」請改 Cloudflare Pages 專案的環境變數（Secrets）：WHITELIST_ENABLED
+    // - 預設（未設定）：視為 true（啟用白名單）
+    // - 設為 0 / false / off / no（不分大小寫）：關閉白名單（方便測試）
+    // 設定方式（PowerShell）：
+    //   wrangler pages secret put WHITELIST_ENABLED --project-name ctf-web
+    //   然後輸入 0 或 1
+    const whitelistEnabled = (() => {
+      const v = env.WHITELIST_ENABLED;
+      if (v === undefined || v === null) return true;
+      const s = String(v).trim().toLowerCase();
+      return !(s === "0" || s === "false" || s === "off" || s === "no");
+    })();
+
     // C-1 白名單：學號必須存在 allowed_students
-    const allowed = await env.DB.prepare(`SELECT 1 FROM allowed_students WHERE student_id = ?`)
-      .bind(studentId)
-      .first();
-    if (!allowed) return json({ ok: false, message: "學號不在修課名單內" }, 403);
+    // 你要「修改白名單名單」請改 D1 資料庫的 allowed_students 表（新增/刪除 student_id）
+    // 例：
+    //   wrangler d1 execute polyglot-ctf --remote --command "INSERT INTO allowed_students(student_id) VALUES ('C111151142');"
+    //   wrangler d1 execute polyglot-ctf --remote --command "DELETE FROM allowed_students WHERE student_id='C111151142';"
+    if (whitelistEnabled) {
+      const allowed = await env.DB.prepare(`SELECT 1 FROM allowed_students WHERE student_id = ?`)
+        .bind(studentId)
+        .first();
+      if (!allowed) return json({ ok: false, message: "學號不在修課名單內" }, 403);
+    }
 
     // C-2 限速（你可調整）
     const limit = Number(env.RATE_LIMIT_PER_MIN || 5);
