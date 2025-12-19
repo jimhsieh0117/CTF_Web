@@ -37,19 +37,15 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const name = String(body.name || "").trim();
     const studentId = String(body.studentId || "").trim();
-    const flags = [
-      String(body.flag1 || "").trim(),
-      String(body.flag2 || "").trim(),
-      String(body.flag3 || "").trim(),
-    ];
+    const flag = String(body.flag || "").trim();
 
     // 基本檢查
-    if (!name || !studentId || flags.some((flag) => !flag)) {
+    if (!name || !studentId || !flag) {
       return json({ ok: false, message: "請填寫所有欄位" }, 400);
     }
     if (name.length > 50) return json({ ok: false, message: "姓名過長" }, 400);
     if (studentId.length > 30) return json({ ok: false, message: "學號格式不正確" }, 400);
-    if (flags.some((flag) => flag.length > 200)) {
+    if (flag.length > 200) {
       return json({ ok: false, message: "Flag 過長" }, 400);
     }
 
@@ -72,18 +68,39 @@ export async function onRequestPost({ request, env }) {
       String(env.FLAG2 || "FLAG{DEMO_FLAG2}"),
       String(env.FLAG3 || "FLAG{DEMO_FLAG3}"),
     ];
-    const correctFlags = flags.map((flag, index) => flag === demoFlags[index]);
+    const flagIndex = demoFlags.findIndex((f) => flag === f) + 1; // 1..3 or 0
 
     const now = Math.floor(Date.now() / 1000);
 
-    // 1) 寫入 submissions（不要存 flag 本文，避免洩漏）
-    await env.DB.prepare(`
-      INSERT INTO submissions(student_id, name, is_correct, created_at)
-      VALUES (?, ?, ?, ?)
-    `).bind(studentId, name, correctFlags.every(Boolean) ? 1 : 0, now).run();
+    // 1) 寫入 submissions（只記錄「答對」的旗子；不要存 flag 本文，避免洩漏）
+    //    規則：每個 flag_index 每位學生只能成功繳交一次（由 DB UNIQUE(student_id, flag_index) 保證）
+    let newlyAccepted = 0;
+    if (flagIndex === 0) {
+      // 不寫入 submissions（避免被刷爆），只記錄 attempts
+    } else {
+      const exists = await env.DB.prepare(
+        `SELECT 1 FROM submissions WHERE student_id = ? AND flag_index = ? LIMIT 1`
+      )
+        .bind(studentId, flagIndex)
+        .first();
 
-    // 2) 更新 players（attempts + last_attempt；第一次答對才寫 first_correct_at）
-    const firstCorrectAt = correctFlags.every(Boolean) ? now : null;
+      if (!exists) {
+        try {
+          await env.DB.prepare(`
+            INSERT INTO submissions(student_id, name, flag_index, is_correct, created_at)
+            VALUES (?, ?, ?, 1, ?)
+          `)
+            .bind(studentId, name, flagIndex, now)
+            .run();
+          newlyAccepted = 1;
+        } catch {
+          // 可能因 UNIQUE(student_id, flag_index) 競態而失敗，視為已繳交過
+        }
+      }
+    }
+
+    // 2) 更新 players（attempts + last_attempt；第一次答對任一旗才寫 first_correct_at）
+    const firstCorrectAt = newlyAccepted > 0 ? now : null;
 
     await env.DB.prepare(`
       INSERT INTO players(student_id, name, attempts, last_attempt_at, first_correct_at)
@@ -95,12 +112,14 @@ export async function onRequestPost({ request, env }) {
         first_correct_at = COALESCE(players.first_correct_at, excluded.first_correct_at);
     `).bind(studentId, name, now, firstCorrectAt).run();
 
-    return json({
-      ok: correctFlags.every(Boolean),
-      message: correctFlags.every(Boolean)
-        ? "✅ 恭喜！所有 Flags 正確"
-        : "❌ Flags 錯誤",
-    });
+    if (flagIndex === 0) {
+      return json({ ok: false, message: "❌ Flag 錯誤" });
+    }
+
+    if (newlyAccepted > 0) {
+      return json({ ok: true, message: `✅ Flag${flagIndex} 正確，已接受` });
+    }
+    return json({ ok: false, message: `⚠️ Flag${flagIndex} 已繳交過` });
   } catch (e) {
     return json({ ok: false, message: "無效的 JSON 或伺服器錯誤" }, 400);
   }

@@ -187,12 +187,14 @@
 
       const statusEl = document.getElementById('status');
       statusEl.textContent = msg;
+      statusEl.style.display = 'block';
       statusEl.className = (json.ok ? 'statusx success' : 'statusx error');
 
       await loadLeaderboard();
     } catch (err) {
       const statusEl = document.getElementById('status');
       statusEl.textContent = '提交失敗';
+      statusEl.style.display = 'block';
       statusEl.className = 'statusx error';
     }
   }

@@ -12,6 +12,9 @@ export async function onRequestGet({ env }) {
       SELECT
         student_id AS studentId,
         name,
+        COUNT(*) AS flagCount,
+        datetime(MIN(created_at), 'unixepoch', '+8 hours') AS firstTime,
+        -- compatibility aliases
         COUNT(*) AS submissionCount,
         datetime(MIN(created_at), 'unixepoch', '+8 hours') AS firstSubmissionTime
       FROM submissions

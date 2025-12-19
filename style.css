@@ -157,6 +157,7 @@ body.flag-page{
   border:1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.18);
   font-weight:700;
+  white-space: pre-line;
 }
 .statusx.success{border-color: rgba(25,135,84,.45); background: rgba(25,135,84,.14)}
 .statusx.error{border-color: rgba(220,53,69,.45); background: rgba(220,53,69,.14)}
