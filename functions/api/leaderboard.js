@@ -10,17 +10,18 @@ export async function onRequestGet({ env }) {
     // 顯示已答對的人，依繳交數量排序，若相同則依最早提交時間排序
     const { results } = await env.DB.prepare(`
       SELECT
-        student_id AS studentId,
-        name,
+        s.student_id AS studentId,
+        p.name AS name,
         COUNT(*) AS flagCount,
-        datetime(MIN(created_at), 'unixepoch', '+8 hours') AS firstTime,
+        datetime(MIN(s.created_at), 'unixepoch', '+8 hours') AS firstTime,
         -- compatibility aliases
         COUNT(*) AS submissionCount,
-        datetime(MIN(created_at), 'unixepoch', '+8 hours') AS firstSubmissionTime
-      FROM submissions
-      WHERE is_correct = 1
-      GROUP BY student_id, name
-      ORDER BY submissionCount DESC, MIN(created_at) ASC
+        datetime(MIN(s.created_at), 'unixepoch', '+8 hours') AS firstSubmissionTime
+      FROM submissions s
+      JOIN players p ON p.student_id = s.student_id
+      WHERE s.is_correct = 1
+      GROUP BY s.student_id
+      ORDER BY submissionCount DESC, MIN(s.created_at) ASC
       LIMIT 50;
     `).all();
 
