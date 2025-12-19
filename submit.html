@@ -1,132 +1,277 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <title>Flag上繳</title>
+  <title>繳交 Flag</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Bootstrap + Icons（用 CDN，Pages 最方便） -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Icons（老師用的） -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Bootstrap（用 CDN，避免你專案沒 Content/bootstrap.css 時炸掉） -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- 你原本的全站樣式（可留可不留） -->
-  <link rel="stylesheet" href="./style.css">
-
-  <!-- 新增：submit/flagset 這頁專用樣式 -->
-  <link rel="stylesheet" href="./flagset.css">
+  <!-- 你自己的樣式 -->
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body class="flag-page">
-  <!-- 背景層（星星 + waves） -->
+  <!-- 背景層：星星＋波浪（外觀接近老師） -->
   <div class="bg-layers" aria-hidden="true">
     <div class="stars" id="starHost"></div>
-    <div class="waves">
-      <div class="wave-layer layer1" data-speed="90"></div>
-      <div class="wave-layer layer2" data-speed="55"></div>
-      <div class="wave-layer layer3" data-speed="35"></div>
+    <div class="waves" aria-hidden="true">
+      <div class="wave-layer layer1"></div>
+      <div class="wave-layer layer2"></div>
+      <div class="wave-layer layer3"></div>
     </div>
   </div>
 
-  <!-- 主要內容 -->
   <main class="content-shell" role="main">
     <div class="page-header">
       <h1 class="page-title"><i class="bi bi-flag-fill page-icon"></i> 繳交 Flag</h1>
-      <p class="page-subtitle">輸入學號上繳 Flag，並查看排行榜。</p>
+      <p class="page-subtitle">輸入學號上繳 Flag 並查看排行榜。</p>
     </div>
 
     <div class="flagset-grid">
-      <!-- 左側：查詢 + 上繳 -->
+      <!-- 左欄：上繳 -->
       <div class="left-col">
-        <!-- 查詢 -->
         <section class="cardx">
           <div class="cardx-header">
-            <h3 class="cardx-title"><i class="bi bi-search me-2"></i>學號查詢</h3>
-            <p class="cardx-subtitle">輸入學號查看你目前的提交紀錄（若你的 API 有提供）</p>
+            <h3 class="cardx-title"><i class="bi bi-upload me-2"></i>上繳 Flag</h3>
+            <p class="cardx-subtitle">填寫資訊後送出（會呼叫 /api/submit）</p>
           </div>
+
           <div class="cardx-body">
-            <form id="searchForm" autocomplete="off">
-              <div class="form-row">
-                <input class="inputx" type="text" id="searchNo" placeholder="輸入學號" required maxlength="20">
-                <button class="btnx primary" type="submit"><i class="bi bi-search me-1"></i>查詢</button>
-              </div>
-            </form>
-            <div class="mt-2">
-              <div id="searchResult" class="mini-result"></div>
-              <small class="form-hint">提示：如果你沒有做 /api/search，這邊會顯示「未提供查詢 API」。</small>
-            </div>
-          </div>
-        </section>
+            <form id="submit-form" autocomplete="off">
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label" for="name">姓名</label>
+                  <input class="inputx" type="text" id="name" name="name" placeholder="輸入姓名" required maxlength="30">
+                </div>
 
-        <!-- 上繳 -->
-        <section class="cardx mt-3">
-          <div class="cardx-header">
-            <h3 class="cardx-title"><i class="bi bi-send-check me-2"></i>上繳 Flag</h3>
-            <p class="cardx-subtitle">輸入學號與 Flag 送出</p>
-          </div>
-          <div class="cardx-body">
-            <form id="submitForm" autocomplete="off">
-              <div class="form-col">
-                <label class="labelx" for="studentId">學號</label>
-                <input class="inputx" type="text" id="studentId" placeholder="例如：C111151142" required maxlength="20">
+                <div class="field">
+                  <label class="field-label" for="studentId">學號</label>
+                  <input class="inputx" type="text" id="studentId" name="studentId" placeholder="輸入學號" required maxlength="20">
+                </div>
+
+                <div class="field field-full">
+                  <label class="field-label" for="flag">Flag</label>
+                  <input class="inputx" type="text" id="flag" name="flag" placeholder="FLAG{...}" required maxlength="200">
+                </div>
               </div>
 
-              <div class="form-col mt-2">
-                <label class="labelx" for="flag">Flag</label>
-                <input class="inputx" type="text" id="flag" placeholder="FLAG{...}" required>
-              </div>
-
-              <div class="d-flex gap-2 mt-3">
-                <button class="btnx primary flex-grow-1" type="submit">
-                  <i class="bi bi-flag-fill me-1"></i>送出
+              <div class="actions">
+                <button type="submit" class="btnx primary">
+                  <i class="bi bi-send-fill me-1"></i>送出
                 </button>
-                <button class="btnx ghost" type="button" id="btnRefresh">
-                  <i class="bi bi-arrow-clockwise me-1"></i>更新榜單
+                <button type="button" class="btnx ghost" id="btn-refresh">
+                  <i class="bi bi-arrow-clockwise me-1"></i>刷新排行榜
                 </button>
               </div>
 
-              <div class="mt-3" id="message"></div>
+              <div id="status" class="statusx" aria-live="polite"></div>
+              <small class="form-hint">提示：送出成功後，右側排行榜會自動更新。</small>
             </form>
           </div>
         </section>
       </div>
 
-      <!-- 右側：排行榜 -->
+      <!-- 右欄：排行榜 -->
       <div class="right-col">
         <section class="cardx rank-card">
           <div class="cardx-header with-action">
             <div>
-              <h6 class="cardx-title small"><i class="bi bi-trophy-fill me-2"></i>總排行榜（提交數）</h6>
+              <h6 class="cardx-title"><i class="bi bi-trophy-fill me-2"></i>總排行榜（提交時間排序）</h6>
               <p class="cardx-subtitle">Top 10</p>
             </div>
-            <button class="btnx ghost small" data-modal-trigger="lb-modal">More</button>
+            <button class="btnx ghost small" data-modal-trigger="lb-overall-modal">More</button>
           </div>
 
           <div class="cardx-body compact">
-            <ol class="rank-list compact" id="rankList"></ol>
+            <ol class="rank-list compact" id="rank-overall">
+              <!-- JS 動態塞 -->
+            </ol>
           </div>
         </section>
       </div>
     </div>
   </main>
 
-  <!-- Modal（More） -->
+  <!-- Modal -->
   <div id="modal-root" class="modal-host">
-    <div class="modal-overlay" id="lb-modal" data-modal-background-click="true" style="display:none;">
+    <div class="modal-overlay" id="lb-overall-modal" data-modal-background-click="true" style="display:none;">
       <div class="modal-container">
         <div class="modal-header">
           <h3><i class="bi bi-trophy-fill modal-title-icon"></i> 總排行榜 - 完整榜單</h3>
           <button class="modal-close-btn" type="button" title="關閉">×</button>
         </div>
         <div class="modal-content">
-          <ol class="rank-list" id="rankListModal"></ol>
-          <div class="text-muted mt-2" style="font-size:12px">
-            註：如果你的 /api/leaderboard 只有回傳 Top10，這裡也會顯示同一份資料（你之後可再做 all=1）。
-          </div>
+          <ol class="rank-list" id="rank-overall-full"></ol>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="./flagset.js"></script>
+  <script>
+    // ====== UI helpers ======
+    function setStatus(message, isSuccess = false) {
+      const status = document.getElementById('status');
+      status.textContent = message || '';
+      status.className = `statusx ${isSuccess ? 'success' : 'error'}`;
+      status.style.display = message ? 'block' : 'none';
+    }
+
+    // 兼容兩種回傳：
+    // A) 直接陣列: [{name, studentId, time}, ...]
+    // B) 物件包裝: {ok:true, data:[...]}
+    function unwrapData(json) {
+      if (Array.isArray(json)) return json;
+      if (json && Array.isArray(json.data)) return json.data;
+      return [];
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    function renderRankList(list, el, limit = 10) {
+      const max = Math.min(list.length, limit);
+      el.innerHTML = '';
+      if (max === 0) {
+        el.innerHTML = `<li class="rank-empty">目前沒有資料</li>`;
+        return;
+      }
+
+      for (let i = 0; i < max; i++) {
+        const e = list[i];
+        const rank = i + 1;
+        const topClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+        const name = escapeHtml(e.name);
+        const sid  = escapeHtml(e.studentId);
+        const time = escapeHtml(e.time);
+
+        el.insertAdjacentHTML('beforeend', `
+          <li class="rank-item mini ${topClass}">
+            <div class="rank-num">${rank}</div>
+            <div class="rank-main">
+              <div class="rank-line">
+                <span class="rank-name">${name}</span>
+                <span class="rank-id">${sid}</span>
+                <span class="rank-chips">
+                  <span class="chip submissions"><i class="bi bi-clock-fill"></i> ${time}</span>
+                </span>
+              </div>
+              <div class="rank-bar overall">
+                <div class="bar-fill" style="width:${Math.max(12, 100 - i * 7)}%"></div>
+              </div>
+            </div>
+          </li>
+        `);
+      }
+    }
+
+    async function loadLeaderboard() {
+      try {
+        const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+        if (!res.ok) throw new Error('無法取得排行榜資料');
+        const json = await res.json();
+        const data = unwrapData(json);
+
+        // 依 time 字串排序（YYYY-MM-DD HH:mm:ss）
+        data.sort((a,b) => String(b.time).localeCompare(String(a.time)));
+
+        renderRankList(data, document.getElementById('rank-overall'), 10);
+        renderRankList(data, document.getElementById('rank-overall-full'), data.length);
+        setStatus('', true);
+      } catch (err) {
+        const demo = [
+          { name: 'Alice', studentId: 'S12345', time: '2025-12-18 10:00:00' },
+          { name: 'Bob', studentId: 'S23456', time: '2025-12-18 10:05:00' },
+          { name: 'Charlie', studentId: 'S34567', time: '2025-12-18 10:10:00' },
+        ];
+        renderRankList(demo, document.getElementById('rank-overall'), 10);
+        renderRankList(demo, document.getElementById('rank-overall-full'), demo.length);
+        setStatus('後端未連線，顯示示範資料', false);
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const studentId = document.getElementById('studentId').value.trim();
+      const flag = document.getElementById('flag').value.trim();
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, studentId, flag })
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || '提交失敗');
+
+        setStatus(json.message || '提交成功', true);
+        document.getElementById('flag').value = '';
+        await loadLeaderboard();
+      } catch (err) {
+        setStatus(err.message || '提交失敗，請稍後再試', false);
+      }
+    }
+
+    // ====== Modal ======
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = 'block';
+      document.body.classList.add('modal-open');
+    }
+    function closeModal(el) {
+      el.style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+
+    // ====== Stars ======
+    function spawnStars(count = 80) {
+      const host = document.getElementById('starHost');
+      if (!host) return;
+      host.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('div');
+        s.className = 'star' + (i % 9 === 0 ? ' s3' : i % 5 === 0 ? ' s2' : '');
+        s.style.left = (Math.random() * 100).toFixed(4) + '%';
+        s.style.top  = (Math.random() * 100).toFixed(4) + '%';
+        s.style.animationDelay = (-Math.random() * 6).toFixed(2) + 's';
+        host.appendChild(s);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      spawnStars(90);
+      loadLeaderboard();
+      document.getElementById('submit-form').addEventListener('submit', handleSubmit);
+      document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
+
+      document.querySelectorAll('[data-modal-trigger]').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.getAttribute('data-modal-trigger')));
+      });
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+          const bgClose = overlay.getAttribute('data-modal-background-click') === 'true';
+          if (bgClose && e.target === overlay) closeModal(overlay);
+        });
+        overlay.querySelector('.modal-close-btn')?.addEventListener('click', () => closeModal(overlay));
+      });
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay').forEach(m => closeModal(m));
+        }
+      });
+    });
+  </script>
 </body>
 </html>
