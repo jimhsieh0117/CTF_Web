@@ -37,13 +37,21 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const name = String(body.name || "").trim();
     const studentId = String(body.studentId || "").trim();
-    const flag = String(body.flag || "").trim();
+    const flags = [
+      String(body.flag1 || "").trim(),
+      String(body.flag2 || "").trim(),
+      String(body.flag3 || "").trim(),
+    ];
 
     // 基本檢查
-    if (!name || !studentId || !flag) return json({ ok: false, message: "請填寫所有欄位" }, 400);
+    if (!name || !studentId || flags.some((flag) => !flag)) {
+      return json({ ok: false, message: "請填寫所有欄位" }, 400);
+    }
     if (name.length > 50) return json({ ok: false, message: "姓名過長" }, 400);
     if (studentId.length > 30) return json({ ok: false, message: "學號格式不正確" }, 400);
-    if (flag.length > 200) return json({ ok: false, message: "Flag 過長" }, 400);
+    if (flags.some((flag) => flag.length > 200)) {
+      return json({ ok: false, message: "Flag 過長" }, 400);
+    }
 
     // C-1 白名單：學號必須存在 allowed_students
     const allowed = await env.DB.prepare(`SELECT 1 FROM allowed_students WHERE student_id = ?`)
@@ -58,9 +66,13 @@ export async function onRequestPost({ request, env }) {
     const rl2 = await hitRateLimit(env, `sid:${studentId}`, limit);
     if (!rl2.ok) return json({ ok: false, message: rl2.message }, 429);
 
-    // Demo Flag（之後你組員完成再換）
-    const demoFlag = String(env.DEMO_FLAG || "FLAG{DEMO_2025}");
-    const isCorrect = flag === demoFlag;
+    // 驗證 Flags
+    const demoFlags = [
+      String(env.FLAG1 || "FLAG{DEMO_FLAG1}"),
+      String(env.FLAG2 || "FLAG{DEMO_FLAG2}"),
+      String(env.FLAG3 || "FLAG{DEMO_FLAG3}"),
+    ];
+    const correctFlags = flags.map((flag, index) => flag === demoFlags[index]);
 
     const now = Math.floor(Date.now() / 1000);
 
@@ -68,10 +80,10 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare(`
       INSERT INTO submissions(student_id, name, is_correct, created_at)
       VALUES (?, ?, ?, ?)
-    `).bind(studentId, name, isCorrect ? 1 : 0, now).run();
+    `).bind(studentId, name, correctFlags.every(Boolean) ? 1 : 0, now).run();
 
     // 2) 更新 players（attempts + last_attempt；第一次答對才寫 first_correct_at）
-    const firstCorrectAt = isCorrect ? now : null;
+    const firstCorrectAt = correctFlags.every(Boolean) ? now : null;
 
     await env.DB.prepare(`
       INSERT INTO players(student_id, name, attempts, last_attempt_at, first_correct_at)
@@ -84,8 +96,10 @@ export async function onRequestPost({ request, env }) {
     `).bind(studentId, name, now, firstCorrectAt).run();
 
     return json({
-      ok: isCorrect,
-      message: isCorrect ? "✅ 恭喜！Flag 正確（Demo）" : "❌ Flag 錯誤（Demo）",
+      ok: correctFlags.every(Boolean),
+      message: correctFlags.every(Boolean)
+        ? "✅ 恭喜！所有 Flags 正確"
+        : "❌ Flags 錯誤",
     });
   } catch (e) {
     return json({ ok: false, message: "無效的 JSON 或伺服器錯誤" }, 400);
