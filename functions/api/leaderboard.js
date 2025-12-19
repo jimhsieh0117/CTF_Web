@@ -1,31 +1,47 @@
-const json = (obj, status = 200) =>
-  new Response(JSON.stringify(obj), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
-
-export async function onRequestGet({ env }) {
+// functions/api/leaderboard.js
+export async function onRequestGet(context) {
   try {
-    // 只顯示已答對的人（first_correct_at != NULL），依最早答對時間排序
-    const { results } = await env.DB.prepare(`
+    const { env } = context;
+
+    // ✅ 排名規則：
+    // 1) 正確提交數量（flagCount）越多越前
+    // 2) 同數量時，最早正確提交時間（firstTime）越早越前
+    //
+    // submissions 表需至少包含：student_id, name, is_correct, created_at
+    const sql = `
       SELECT
         student_id AS studentId,
-        name,
-        datetime(first_correct_at, 'unixepoch', '+8 hours') AS time
-      FROM players
-      WHERE first_correct_at IS NOT NULL
-      ORDER BY first_correct_at ASC
-      LIMIT 50;
-    `).all();
+        MAX(name)  AS name,
+        COUNT(*)   AS flagCount,
+        datetime(MIN(created_at), 'unixepoch', '+8 hours') AS firstTime,
+        MIN(created_at) AS firstTimeUnix
+      FROM submissions
+      WHERE is_correct = 1
+      GROUP BY student_id
+      ORDER BY flagCount DESC, firstTimeUnix ASC
+      LIMIT 100
+    `;
 
-    return json({ ok: true, data: results });
+    const result = await env.DB.prepare(sql).all();
+    const data = (result.results || []).map((r) => ({
+      studentId: r.studentId,
+      name: r.name,
+      flagCount: Number(r.flagCount || 0),
+      firstTime: r.firstTime, // e.g. '2025-12-18 21:06:21' (Taipei)
+    }));
+
+    return json({ ok: true, data });
   } catch (e) {
-    return json({ ok: false, message: "leaderboard 查詢失敗" }, 500);
+    return json({ ok: false, error: String(e?.message || e) }, 500);
   }
 }
 
-// 其他 method 一律擋掉
-export async function onRequest({ request }) {
-  if (request.method === "GET") return; // 交給 onRequestGet
-  return json({ ok: false, message: "Method not allowed" }, 405);
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
 }
