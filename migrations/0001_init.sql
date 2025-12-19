@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS submissions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id TEXT NOT NULL,
   name TEXT NOT NULL,
+  flag TEXT NOT NULL,
   is_correct INTEGER NOT NULL,
   created_at INTEGER NOT NULL,
-  ip_hash TEXT,
-  user_agent TEXT
+  UNIQUE(student_id, flag) -- 防止同一學生提交相同的 FLAG
 );
 
 CREATE TABLE IF NOT EXISTS rate_limits (
