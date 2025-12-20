@@ -145,9 +145,9 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (newlyAccepted > 0) {
-      return json({ ok: true, message: `✅ Flag${flagIndex} 正確，已接受` });
+      return json({ ok: true, message: `✅ Flag 正確，已接受` });
     }
-    return json({ ok: false, message: `⚠️ Flag${flagIndex} 已繳交過` });
+    return json({ ok: false, message: `⚠️ Flag 已繳交過` });
   } catch (e) {
     return json({ ok: false, message: "無效的 JSON 或伺服器錯誤" }, 400);
   }
