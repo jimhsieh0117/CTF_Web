@@ -47,7 +47,7 @@ export async function onRequestPost({ request, env }) {
       return json({ ok: false, message: "請填寫所有欄位" }, 400);
     }
     if (!isValidStudentId(studentId)) {
-      return json({ ok: false, message: "學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）" }, 400);
+      return json({ ok: false, message: "學號格式不正確（需為 C 加上 9 碼數字）" }, 400);
     }
     if (flag.length > 200) {
       return json({ ok: false, message: "Flag 過長" }, 400);

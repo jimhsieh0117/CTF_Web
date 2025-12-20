@@ -39,7 +39,8 @@
               <div class="form-grid">
                 <div class="field">
                   <label class="field-label" for="studentId">學號</label>
-                  <input class="inputx" type="text" id="studentId" name="studentId" placeholder="C111151112" required maxlength="10" pattern="^C\d{9}$" inputmode="text" autocomplete="off">
+                  <input class="inputx" type="text" id="studentId" name="studentId" placeholder="CXXXXXXXXX" required maxlength="10" pattern="^C\d{9}$" inputmode="text" autocomplete="off">
+                  <small class="form-hint" id="studentId-error" style="display:none"></small>
                 </div>
                 <div class="field">
                   <label class="field-label">&nbsp;</label>
@@ -135,6 +136,46 @@
   let progressData = null; // { solvedCount, unlocked:{...} }
   let hasQueried = false;
 
+  function isValidStudentId(studentId) {
+    return /^C\d{9}$/.test(String(studentId || '').trim());
+  }
+
+  function setStudentIdError(text) {
+    const el = document.getElementById('studentId-error');
+    if (!el) return;
+    if (!text) {
+      el.textContent = '';
+      el.style.display = 'none';
+      return;
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+
+  function setQueryButtonVisible(visible) {
+    const btn = document.getElementById('btn-query-story');
+    if (!btn) return;
+    btn.style.display = visible ? '' : 'none';
+  }
+
+  function updateStudentIdUi(studentId) {
+    const sid = String(studentId || '').trim();
+    if (!sid) {
+      setStudentIdError('');
+      setQueryButtonVisible(false);
+      setStoryVisible(false);
+      return;
+    }
+    if (!isValidStudentId(sid)) {
+      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）');
+      setQueryButtonVisible(false);
+      setStoryVisible(false);
+      return;
+    }
+    setStudentIdError('');
+    setQueryButtonVisible(true);
+  }
+
   function setStoryVisible(visible) {
     const card = document.getElementById('story-card');
     if (!card) return;
@@ -154,9 +195,19 @@
 
     const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
 
-    if (b2) b2.disabled = !(storyParts && unlocked.chapter2);
-    if (b3) b3.disabled = !(storyParts && unlocked.chapter3);
-    if (be) be.disabled = !(storyParts && unlocked.epilogue);
+    // 依進度「出現」按鈕（不是 disabled 顯示）
+    if (b2) {
+      b2.style.display = unlocked.chapter2 ? '' : 'none';
+      b2.disabled = !(storyParts && storyParts.ch2);
+    }
+    if (b3) {
+      b3.style.display = unlocked.chapter3 ? '' : 'none';
+      b3.disabled = !(storyParts && storyParts.ch3);
+    }
+    if (be) {
+      be.style.display = unlocked.epilogue ? '' : 'none';
+      be.disabled = !(storyParts && storyParts.ep);
+    }
   }
 
   function openStoryModal(title, bodyText) {
@@ -239,6 +290,16 @@
       progressData = null;
       setStoryVisible(false);
       setStoryStatus('請先輸入學號，並按「查詢」。');
+      setStoryButtonsEnabled();
+      return;
+    }
+
+    if (!isValidStudentId(sid)) {
+      progressData = null;
+      setStoryVisible(false);
+      setStoryStatus('');
+      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）');
+      setQueryButtonVisible(false);
       setStoryButtonsEnabled();
       return;
     }
@@ -388,6 +449,7 @@
     // 一律先隱藏：必須按「查詢」才顯示
     setStoryVisible(false);
     setStoryStatus('請先輸入學號，並按「查詢」。');
+    updateStudentIdUi(studentIdEl ? studentIdEl.value : '');
 
     document.getElementById('submit-form').addEventListener('submit', handleSubmit);
     document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
@@ -425,6 +487,7 @@
         setStoryVisible(false);
         setStoryStatus('請按「查詢」以載入解鎖進度。');
         setStoryButtonsEnabled();
+        updateStudentIdUi(studentIdEl.value);
       });
     }
 
@@ -433,6 +496,14 @@
       if (!sid) {
         setStoryVisible(false);
         setStoryStatus('請先輸入學號，再按查詢。');
+        return;
+      }
+      if (!isValidStudentId(sid)) {
+        hasQueried = false;
+        progressData = null;
+        setStoryVisible(false);
+        setStoryStatus('');
+        updateStudentIdUi(sid);
         return;
       }
       localStorage.setItem(LS_STUDENT_ID_KEY, sid);
