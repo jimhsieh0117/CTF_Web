@@ -167,7 +167,7 @@
       return;
     }
     if (!isValidStudentId(sid)) {
-      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）');
+      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字）');
       setQueryButtonVisible(false);
       setStoryVisible(false);
       return;
@@ -298,7 +298,7 @@
       progressData = null;
       setStoryVisible(false);
       setStoryStatus('');
-      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）');
+      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字）');
       setQueryButtonVisible(false);
       setStoryButtonsEnabled();
       return;
