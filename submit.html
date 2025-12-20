@@ -41,6 +41,10 @@
                   <label class="field-label" for="studentId">學號</label>
                   <input class="inputx" type="text" id="studentId" name="studentId" placeholder="輸入學號" required maxlength="20">
                 </div>
+                <div class="field">
+                  <label class="field-label">&nbsp;</label>
+                  <button type="button" class="btnx ghost" id="btn-query-story"><i class="bi bi-search me-1"></i>查詢</button>
+                </div>
                 <div class="field field-full">
                   <label class="field-label" for="flag">Flag</label>
                   <input class="inputx" type="text" id="flag" name="flag" placeholder="FLAG{...}" required maxlength="200">
@@ -129,6 +133,7 @@
   const LS_STUDENT_ID_KEY = 'ctf_studentId';
   let storyParts = null; // { ch2:{title,body}, ch3:{...}, ep:{...} }
   let progressData = null; // { solvedCount, unlocked:{...} }
+  let hasQueried = false;
 
   function setStoryVisible(visible) {
     const card = document.getElementById('story-card');
@@ -233,7 +238,16 @@
     if (!sid) {
       progressData = null;
       setStoryVisible(false);
-      setStoryStatus('請先輸入學號以載入解鎖進度。');
+      setStoryStatus('請先輸入學號，並按「查詢」。');
+      setStoryButtonsEnabled();
+      return;
+    }
+
+    // 必須先按下查詢才顯示劇情
+    if (!hasQueried) {
+      progressData = null;
+      setStoryVisible(false);
+      setStoryStatus('請按「查詢」以載入解鎖進度。');
       setStoryButtonsEnabled();
       return;
     }
@@ -358,7 +372,7 @@
       statusEl.className = (json.ok ? 'statusx success' : 'statusx error');
 
       await loadLeaderboard();
-      await refreshProgress(studentId);
+      if (hasQueried) await refreshProgress(studentId);
     } catch (err) {
       const statusEl = document.getElementById('status');
       statusEl.textContent = '提交失敗';
@@ -372,7 +386,9 @@
     const savedSid = localStorage.getItem(LS_STUDENT_ID_KEY);
     if (studentIdEl && savedSid) studentIdEl.value = savedSid;
 
-    setStoryVisible(Boolean(studentIdEl && studentIdEl.value.trim()));
+    // 一律先隱藏：必須按「查詢」才顯示
+    setStoryVisible(false);
+    setStoryStatus('請先輸入學號，並按「查詢」。');
 
     document.getElementById('submit-form').addEventListener('submit', handleSubmit);
     document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
@@ -401,18 +417,33 @@
     });
 
     // 進度：studentId 變更就保存並刷新（簡單 debounce）
-    let progressTimer = null;
     if (studentIdEl) {
       studentIdEl.addEventListener('input', () => {
         localStorage.setItem(LS_STUDENT_ID_KEY, studentIdEl.value.trim());
-        setStoryVisible(Boolean(studentIdEl.value.trim()));
-        if (progressTimer) clearTimeout(progressTimer);
-        progressTimer = setTimeout(() => refreshProgress(studentIdEl.value), 250);
+        // 變更學號後，需重新按查詢
+        hasQueried = false;
+        progressData = null;
+        setStoryVisible(false);
+        setStoryStatus('請按「查詢」以載入解鎖進度。');
+        setStoryButtonsEnabled();
       });
     }
 
+    document.getElementById('btn-query-story').addEventListener('click', async () => {
+      const sid = studentIdEl ? studentIdEl.value.trim() : '';
+      if (!sid) {
+        setStoryVisible(false);
+        setStoryStatus('請先輸入學號，再按查詢。');
+        return;
+      }
+      localStorage.setItem(LS_STUDENT_ID_KEY, sid);
+      hasQueried = true;
+      await refreshProgress(sid);
+    });
+
     loadLeaderboard();
     loadStory();
+    // 不自動查詢進度：必須按下查詢按鈕
     refreshProgress(studentIdEl ? studentIdEl.value : '');
   });
   </script>
