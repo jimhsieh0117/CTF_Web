@@ -341,13 +341,12 @@
     } catch (err) {
       console.warn('loadLeaderboard failed, using demo data:', err);
 
-      // Demo / fallback
-      const demoData = [
-        { studentId: 'C111151142', name: '小謝', flagCount: 1, firstTime: '2025-12-18 21:06:21' },
-        { studentId: 'C111151143', name: '小明', flagCount: 1, firstTime: '2025-12-18 21:10:12' },
-      ];
-      renderRankList(overallTopEl,  demoData, 10);
-      if (overallFullEl) renderRankList(overallFullEl, demoData, 999);
+      if (overallTopEl) {
+        overallTopEl.innerHTML = '<li class="rank-empty">排行榜載入失敗，請稍後再試</li>';
+      }
+      if (overallFullEl) {
+        overallFullEl.innerHTML = '<li class="rank-empty">排行榜載入失敗，請稍後再試</li>';
+      }
     }
   }
 
