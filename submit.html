@@ -57,7 +57,7 @@
           </div>
         </section>
 
-        <section class="cardx" style="margin-top:16px">
+        <section class="cardx" id="story-card" style="margin-top:16px; display:none">
           <div class="cardx-header">
             <h3 class="cardx-title"><i class="bi bi-book-half me-2"></i>劇情</h3>
             <p class="cardx-subtitle">依解題進度解鎖（第二章 / 第三章 / 尾聲）</p>
@@ -129,6 +129,13 @@
   const LS_STUDENT_ID_KEY = 'ctf_studentId';
   let storyParts = null; // { ch2:{title,body}, ch3:{...}, ep:{...} }
   let progressData = null; // { solvedCount, unlocked:{...} }
+
+  function setStoryVisible(visible) {
+    const card = document.getElementById('story-card');
+    if (!card) return;
+    card.style.display = visible ? '' : 'none';
+    if (!visible) closeStoryModal();
+  }
 
   function setStoryStatus(text) {
     const el = document.getElementById('story-status');
@@ -225,10 +232,13 @@
     const sid = String(studentId || '').trim();
     if (!sid) {
       progressData = null;
+      setStoryVisible(false);
       setStoryStatus('請先輸入學號以載入解鎖進度。');
       setStoryButtonsEnabled();
       return;
     }
+
+    setStoryVisible(true);
 
     try {
       const res = await fetch('/api/progress', {
@@ -362,6 +372,8 @@
     const savedSid = localStorage.getItem(LS_STUDENT_ID_KEY);
     if (studentIdEl && savedSid) studentIdEl.value = savedSid;
 
+    setStoryVisible(Boolean(studentIdEl && studentIdEl.value.trim()));
+
     document.getElementById('submit-form').addEventListener('submit', handleSubmit);
     document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
 
@@ -393,6 +405,7 @@
     if (studentIdEl) {
       studentIdEl.addEventListener('input', () => {
         localStorage.setItem(LS_STUDENT_ID_KEY, studentIdEl.value.trim());
+        setStoryVisible(Boolean(studentIdEl.value.trim()));
         if (progressTimer) clearTimeout(progressTimer);
         progressTimer = setTimeout(() => refreshProgress(studentIdEl.value), 250);
       });
