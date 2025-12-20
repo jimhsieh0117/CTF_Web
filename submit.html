@@ -56,6 +56,21 @@
             </form>
           </div>
         </section>
+
+        <section class="cardx" style="margin-top:16px">
+          <div class="cardx-header">
+            <h3 class="cardx-title"><i class="bi bi-book-half me-2"></i>劇情</h3>
+            <p class="cardx-subtitle">依解題進度解鎖（第二章 / 第三章 / 尾聲）</p>
+          </div>
+          <div class="cardx-body">
+            <div class="actions">
+              <button type="button" class="btnx ghost" id="btn-story-ch2" disabled>第二章...</button>
+              <button type="button" class="btnx ghost" id="btn-story-ch3" disabled>第三章....</button>
+              <button type="button" class="btnx ghost" id="btn-story-ep" disabled>尾聲</button>
+            </div>
+            <small class="form-hint" id="story-status">請先輸入學號以載入解鎖進度。</small>
+          </div>
+        </section>
       </div>
 
       <div class="right-col">
@@ -79,6 +94,20 @@
     </div>
   </main>
 
+  <div class="modal-host" id="story-modal" style="display:none">
+    <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="story-modal-title">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 class="cardx-title" id="story-modal-title">劇情</h3>
+          <button class="modal-close-btn" type="button" aria-label="關閉" id="story-modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <pre class="story-content" id="story-modal-body"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
   // ======= 工具 =======
   function escapeHtml(str) {
@@ -94,6 +123,140 @@
     if (!json || typeof json !== 'object') return [];
     if (json.ok && Array.isArray(json.data)) return json.data;
     return [];
+  }
+
+  // ======= 劇情（第二章 / 第三章 / 尾聲） =======
+  const LS_STUDENT_ID_KEY = 'ctf_studentId';
+  let storyParts = null; // { ch2:{title,body}, ch3:{...}, ep:{...} }
+  let progressData = null; // { solvedCount, unlocked:{...} }
+
+  function setStoryStatus(text) {
+    const el = document.getElementById('story-status');
+    if (el) el.textContent = text;
+  }
+
+  function setStoryButtonsEnabled() {
+    const b2 = document.getElementById('btn-story-ch2');
+    const b3 = document.getElementById('btn-story-ch3');
+    const be = document.getElementById('btn-story-ep');
+
+    const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
+
+    if (b2) b2.disabled = !(storyParts && unlocked.chapter2);
+    if (b3) b3.disabled = !(storyParts && unlocked.chapter3);
+    if (be) be.disabled = !(storyParts && unlocked.epilogue);
+  }
+
+  function openStoryModal(title, bodyText) {
+    const host = document.getElementById('story-modal');
+    const titleEl = document.getElementById('story-modal-title');
+    const bodyEl = document.getElementById('story-modal-body');
+    if (!host || !titleEl || !bodyEl) return;
+
+    titleEl.textContent = title || '劇情';
+    bodyEl.textContent = bodyText || '';
+    host.style.display = 'block';
+    document.body.classList.add('modal-open');
+  }
+
+  function closeStoryModal() {
+    const host = document.getElementById('story-modal');
+    if (!host) return;
+    host.style.display = 'none';
+    document.body.classList.remove('modal-open');
+  }
+
+  function cleanStoryBodyLines(lines) {
+    return lines
+      .filter((line) => {
+        const t = String(line || '').trim();
+        if (!t) return true;
+        // 移除出題者註記（避免直接暴雷）
+        if (t.includes('（對應') || t.includes('（可以移除）')) return false;
+        return true;
+      })
+      .join('\n')
+      .trim();
+  }
+
+  function parseStoryMarkdown(md) {
+    const lines = String(md || '').replaceAll('\r\n', '\n').split('\n');
+
+    const headings = [];
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^##\s+(.*)\s*$/);
+      if (m) headings.push({ idx: i, title: m[1] });
+    }
+
+    function extractByKeyword(keyword) {
+      const start = headings.find((h) => h.title.includes(keyword));
+      if (!start) return null;
+      const startLine = start.idx + 1;
+      const next = headings.find((h) => h.idx > start.idx);
+      const endLine = next ? next.idx - 1 : lines.length - 1;
+      const body = cleanStoryBodyLines(lines.slice(startLine, endLine + 1));
+      return { title: start.title, body };
+    }
+
+    return {
+      ch2: extractByKeyword('第二章'),
+      ch3: extractByKeyword('第三章'),
+      ep: extractByKeyword('尾聲'),
+    };
+  }
+
+  async function loadStory() {
+    try {
+      const res = await fetch('/CTF_story.md', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const md = await res.text();
+      storyParts = parseStoryMarkdown(md);
+      if (!storyParts?.ch2 || !storyParts?.ch3 || !storyParts?.ep) {
+        setStoryStatus('劇情載入成功，但章節標題找不到（請確認 CTF_story.md）。');
+      }
+    } catch {
+      storyParts = null;
+      setStoryStatus('劇情載入失敗（找不到 /CTF_story.md）。');
+    }
+    setStoryButtonsEnabled();
+  }
+
+  async function refreshProgress(studentId) {
+    const sid = String(studentId || '').trim();
+    if (!sid) {
+      progressData = null;
+      setStoryStatus('請先輸入學號以載入解鎖進度。');
+      setStoryButtonsEnabled();
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: sid }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) {
+        progressData = null;
+        setStoryStatus(json.message || '進度讀取失敗');
+        setStoryButtonsEnabled();
+        return;
+      }
+
+      progressData = json.data;
+      const solved = Number(progressData?.solvedCount ?? 0);
+      if (solved <= 0) setStoryStatus('尚未解鎖：請先解第一關。');
+      else if (solved === 1) setStoryStatus('已解鎖：第二章');
+      else if (solved === 2) setStoryStatus('已解鎖：第二章、第三章');
+      else setStoryStatus('已解鎖：第二章、第三章、尾聲');
+    } catch {
+      progressData = null;
+      setStoryStatus('進度讀取失敗');
+    }
+
+    setStoryButtonsEnabled();
   }
 
   // ✅ 改這裡：排行榜顯示「FLAG數」＋「最早提交」＋ 正確排序
@@ -156,8 +319,8 @@
 
       // Demo / fallback
       const demoData = [
-        { studentId: 'C111151142', name: '謝金佑', flagCount: 1, firstTime: '2025-12-18 21:06:21' },
-        { studentId: 'C111151143', name: '王小明', flagCount: 1, firstTime: '2025-12-18 21:10:12' },
+        { studentId: 'C111151142', name: '小謝', flagCount: 1, firstTime: '2025-12-18 21:06:21' },
+        { studentId: 'C111151143', name: '小明', flagCount: 1, firstTime: '2025-12-18 21:10:12' },
       ];
       renderRankList(overallTopEl,  demoData, 10);
       if (overallFullEl) renderRankList(overallFullEl, demoData, 999);
@@ -185,6 +348,7 @@
       statusEl.className = (json.ok ? 'statusx success' : 'statusx error');
 
       await loadLeaderboard();
+      await refreshProgress(studentId);
     } catch (err) {
       const statusEl = document.getElementById('status');
       statusEl.textContent = '提交失敗';
@@ -194,9 +358,49 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    const studentIdEl = document.getElementById('studentId');
+    const savedSid = localStorage.getItem(LS_STUDENT_ID_KEY);
+    if (studentIdEl && savedSid) studentIdEl.value = savedSid;
+
     document.getElementById('submit-form').addEventListener('submit', handleSubmit);
     document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
+
+    // 劇情：Modal 行為
+    document.getElementById('story-modal-close').addEventListener('click', closeStoryModal);
+    document.getElementById('story-modal').addEventListener('click', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) closeStoryModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeStoryModal();
+    });
+
+    // 劇情：按鈕
+    document.getElementById('btn-story-ch2').addEventListener('click', () => {
+      if (!storyParts?.ch2) return;
+      openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
+    });
+    document.getElementById('btn-story-ch3').addEventListener('click', () => {
+      if (!storyParts?.ch3) return;
+      openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
+    });
+    document.getElementById('btn-story-ep').addEventListener('click', () => {
+      if (!storyParts?.ep) return;
+      openStoryModal(storyParts.ep.title, storyParts.ep.body);
+    });
+
+    // 進度：studentId 變更就保存並刷新（簡單 debounce）
+    let progressTimer = null;
+    if (studentIdEl) {
+      studentIdEl.addEventListener('input', () => {
+        localStorage.setItem(LS_STUDENT_ID_KEY, studentIdEl.value.trim());
+        if (progressTimer) clearTimeout(progressTimer);
+        progressTimer = setTimeout(() => refreshProgress(studentIdEl.value), 250);
+      });
+    }
+
     loadLeaderboard();
+    loadStory();
+    refreshProgress(studentIdEl ? studentIdEl.value : '');
   });
   </script>
 </body>

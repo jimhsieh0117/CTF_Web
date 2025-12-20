@@ -237,3 +237,9 @@ body.flag-page{
 }
 .modal-content{padding:14px 16px}
 .rank-empty{padding:12px; color:rgba(234,242,255,.75)}
+
+.story-content{
+  margin:0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
