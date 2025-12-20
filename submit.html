@@ -38,10 +38,6 @@
             <form id="submit-form" autocomplete="off">
               <div class="form-grid">
                 <div class="field">
-                  <label class="field-label" for="name">姓名</label>
-                  <input class="inputx" type="text" id="name" name="name" placeholder="輸入姓名" required maxlength="30">
-                </div>
-                <div class="field">
                   <label class="field-label" for="studentId">學號</label>
                   <input class="inputx" type="text" id="studentId" name="studentId" placeholder="輸入學號" required maxlength="20">
                 </div>
@@ -111,7 +107,6 @@
     data.slice(0, limit).forEach((e, i) => {
       const rank = i + 1;
       const topClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
-      const name = escapeHtml(e.name || '');
       const sid  = escapeHtml(e.studentId || '');
       const cnt  = Number(e.flagCount ?? e.count ?? 0);
       const firstTime = escapeHtml(e.firstTime || e.time || '');
@@ -121,8 +116,7 @@
           <div class="rank-num">${rank}</div>
           <div class="rank-main">
             <div class="rank-line">
-              <span class="rank-name">${name}</span>
-              <span class="rank-id">${sid}</span>
+              <span class="rank-name">${sid}</span>
               <span class="rank-pill"><i class="bi bi-flag-fill"></i> ${cnt}</span>
               <span class="rank-pill"><i class="bi bi-clock-history"></i> ${firstTime}</span>
             </div>
@@ -172,7 +166,6 @@
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const name = document.getElementById('name').value.trim();
     const studentId = document.getElementById('studentId').value.trim();
     const flag = document.getElementById('flag').value.trim();
 
@@ -180,7 +173,7 @@
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, studentId, flag })
+        body: JSON.stringify({ studentId, flag })
       });
 
       const json = await res.json().catch(() => ({}));

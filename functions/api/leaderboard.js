@@ -11,14 +11,12 @@ export async function onRequestGet({ env }) {
     const { results } = await env.DB.prepare(`
       SELECT
         s.student_id AS studentId,
-        p.name AS name,
         COUNT(*) AS flagCount,
         datetime(MIN(s.created_at), 'unixepoch', '+8 hours') AS firstTime,
         -- compatibility aliases
         COUNT(*) AS submissionCount,
         datetime(MIN(s.created_at), 'unixepoch', '+8 hours') AS firstSubmissionTime
       FROM submissions s
-      JOIN players p ON p.student_id = s.student_id
       WHERE s.is_correct = 1
       GROUP BY s.student_id
       ORDER BY submissionCount DESC, MIN(s.created_at) ASC

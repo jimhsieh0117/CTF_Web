@@ -35,19 +35,21 @@ export async function onRequestPost({ request, env }) {
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
     const body = await request.json();
-    const name = String(body.name || "").trim();
     const studentId = String(body.studentId || "").trim();
     const flag = String(body.flag || "").trim();
 
     // 基本檢查
-    if (!name || !studentId || !flag) {
+    if (!studentId || !flag) {
       return json({ ok: false, message: "請填寫所有欄位" }, 400);
     }
-    if (name.length > 50) return json({ ok: false, message: "姓名過長" }, 400);
     if (studentId.length > 30) return json({ ok: false, message: "學號格式不正確" }, 400);
     if (flag.length > 200) {
       return json({ ok: false, message: "Flag 過長" }, 400);
     }
+
+    // 本專案不再收集姓名；為了維持既有 DB schema（submissions.name / players.name NOT NULL），
+    // 會用 studentId 當作 name 欄位的值。
+    const name = studentId;
 
     // ===== 白名單設定（測試開關） =====
     // 你要「開/關白名單限制」請改 Cloudflare Pages 專案的環境變數（Secrets）：WHITELIST_ENABLED
