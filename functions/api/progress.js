@@ -11,6 +11,10 @@ function isWhitelistEnabled(env) {
   return !(s === "0" || s === "false" || s === "off" || s === "no");
 }
 
+function isValidStudentId(studentId) {
+  return /^C\d{9}$/.test(String(studentId || "").trim());
+}
+
 export async function onRequestPost({ request, env }) {
   let body;
   try {
@@ -21,7 +25,9 @@ export async function onRequestPost({ request, env }) {
 
   const studentId = String(body?.studentId || "").trim();
   if (!studentId) return json({ ok: false, message: "請輸入學號" }, 400);
-  if (studentId.length > 30) return json({ ok: false, message: "學號格式不正確" }, 400);
+  if (!isValidStudentId(studentId)) {
+    return json({ ok: false, message: "學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）" }, 400);
+  }
 
   // 依 submit.js 同規則：預設啟用白名單
   if (isWhitelistEnabled(env)) {

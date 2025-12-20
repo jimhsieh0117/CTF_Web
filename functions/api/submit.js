@@ -4,6 +4,10 @@ const json = (obj, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8" },
   });
 
+function isValidStudentId(studentId) {
+  return /^C\d{9}$/.test(String(studentId || "").trim());
+}
+
 // 固定窗限速：每分鐘 N 次（key 可以用 ip 或 studentId）
 async function hitRateLimit(env, key, limitPerMin) {
   const now = Math.floor(Date.now() / 1000);
@@ -42,7 +46,9 @@ export async function onRequestPost({ request, env }) {
     if (!studentId || !flag) {
       return json({ ok: false, message: "請填寫所有欄位" }, 400);
     }
-    if (studentId.length > 30) return json({ ok: false, message: "學號格式不正確" }, 400);
+    if (!isValidStudentId(studentId)) {
+      return json({ ok: false, message: "學號格式不正確（需為 C 加上 9 碼數字，例如 C111151112）" }, 400);
+    }
     if (flag.length > 200) {
       return json({ ok: false, message: "Flag 過長" }, 400);
     }
