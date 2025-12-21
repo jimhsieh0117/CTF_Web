@@ -91,12 +91,14 @@ export async function onRequestPost({ request, env }) {
     if (!rl2.ok) return json({ ok: false, message: rl2.message }, 429);
 
     // 驗證 Flags
-    const demoFlags = [
-      String(env.FLAG1 || "FLAG{DEMO_FLAG1}"),
-      String(env.FLAG2 || "FLAG{DEMO_FLAG2}"),
-      String(env.FLAG3 || "FLAG{DEMO_FLAG3}"),
-    ];
-    const flagIndex = demoFlags.findIndex((f) => flag === f) + 1; // 1..3 or 0
+    const flags = [env.FLAG1, env.FLAG2, env.FLAG3].map((v) =>
+      v === undefined || v === null ? "" : String(v)
+    );
+    if (flags.some((f) => !f)) {
+      return json({ ok: false, message: "伺服器尚未設定 FLAG1/FLAG2/FLAG3" }, 500);
+    }
+
+    const flagIndex = flags.findIndex((f) => flag === f) + 1; // 1..3 or 0
 
     const now = Math.floor(Date.now() / 1000);
 
