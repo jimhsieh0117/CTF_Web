@@ -1,8 +1,47 @@
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
+
+function getRequestOrigin(request) {
+  const origin = request.headers.get("Origin");
+  if (origin) return origin;
+  const referer = request.headers.get("Referer");
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function isAllowedOrigin(request, env) {
+  const origin = getRequestOrigin(request);
+  if (!origin) return false;
+
+  const allowed = [];
+  const configured = String(env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (configured.length > 0) {
+    allowed.push(...configured);
+  } else {
+    // 預設：只允許同一個網站；另外加上本機 wrangler dev 常用 origin
+    allowed.push(new URL(request.url).origin);
+    allowed.push("http://127.0.0.1:8788");
+    allowed.push("http://localhost:8788");
+  }
+
+  return allowed.includes(origin);
+}
 
 function isValidStudentId(studentId) {
   return /^C\d{9}$/.test(String(studentId || "").trim());
@@ -36,6 +75,10 @@ async function hitRateLimit(env, key, limitPerMin) {
 
 export async function onRequestPost({ request, env }) {
   try {
+    if (!isAllowedOrigin(request, env)) {
+      return json({ ok: false, message: "Forbidden" }, 403);
+    }
+
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
     const body = await request.json();
