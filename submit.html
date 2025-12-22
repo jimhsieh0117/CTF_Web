@@ -25,7 +25,7 @@
   </div>
 
   <main id="submit-stage">
-    <div class="content-card" style="padding: 2rem; max-width: 1200px; width: 95%;">
+    <div class="content-card">
 
       <h1>繳交 Flag</h1>
       <p class="secret-hint" style="margin-bottom: 2rem;">上繳學號與真相，揭開下一層的迷霧。</p>
@@ -225,7 +225,7 @@
       setStoryButtonsEnabled();
     }
 
-    async function refreshProgress(studentId) {
+    async function refreshProgress(studentId, forceShow = false) {
       const sid = String(studentId || '').trim();
       if (!sid) {
         setStoryVisible(false);
@@ -237,7 +237,7 @@
         setStudentIdError('學號格式不正確');
         return;
       }
-      if (!hasQueried) {
+      if (!hasQueried && !forceShow) {
         setStoryVisible(false);
         setStoryStatus('請按「查詢進度」以載入。');
         return;
@@ -356,7 +356,9 @@
 
         if (json.ok) {
           // Refresh progress and check for story unlock
-          await refreshProgress(studentId);
+          // Force show story section since we just successfully submitted
+          hasQueried = true;
+          await refreshProgress(studentId, true);
 
           // Auto-trigger story dialog based on new solved count
           if (progressData && typeof progressData.solvedCount === 'number') {
