@@ -5,10 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>序章：沉睡的秘密</title>
-    <link rel="stylesheet" href="prologue.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <!-- Modal Overlay -->
+    <div id="ctf-modal-overlay">
+        <div class="ctf-modal">
+            <button class="ctf-modal-close">×</button>
+            <h3 class="ctf-modal-title" id="modal-title">標題</h3>
+            <div class="ctf-modal-body" id="modal-body">內容...</div>
+        </div>
+    </div>
+
     <main id="stage">
         <div class="content-card">
             <h1>序章：沉睡的秘密</h1>
@@ -29,14 +38,16 @@
             <section id="download-section">
                 <h2>開啟挑戰</h2>
                 <div class="button-container">
-                    <a href="/assets/final_challenge.png" class="btn">下載封印檔案</a>
+                    <a href="/assets/challenge.zip" class="btn" id="btn-download">下載封印檔案</a>
                     <a href="submit.html" class="btn btn-secondary">前往提交 Flag</a>
                 </div>
             </section>
         </div>
     </main>
 
+    <script src="dialog.js"></script>
     <script src="prologue.js"></script>
+
 </body>
 
 </html>

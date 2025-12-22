@@ -41,4 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
+    // --- Index Page: Download & Story Logic ---
+    const btnDownload = document.getElementById('btn-download');
+    
+    if (btnDownload) {
+        
+        const loadAndShowChapter1 = async () => {
+            try {
+                const res = await fetch('/CTF_story.md', { cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const md = await res.text();
+                
+                // Use shared parser from dialog.js
+                const parts = parseStoryMarkdown(md);
+                if (parts && parts.ch1) {
+                    openStoryModal(parts.ch1.title, parts.ch1.body);
+                }
+
+            } catch (e) {
+                console.error('Failed to load story:', e);
+            }
+        };
+
+        btnDownload.addEventListener('click', () => {
+            setTimeout(loadAndShowChapter1, 500);
+        });
+    }
 });

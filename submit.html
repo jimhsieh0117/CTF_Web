@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <title>繳交 Flag | 沉睡的秘密</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="prologue.css">
+  <link rel="stylesheet" href="style.css">
   <!-- Note: Removing bootstrap, using custom styles -->
 </head>
 
@@ -13,7 +13,7 @@
   <!-- Modal Overlay -->
   <div id="ctf-modal-overlay">
     <div class="ctf-modal">
-      <button class="ctf-modal-close" onclick="closeStoryModal()">×</button>
+      <button class="ctf-modal-close">×</button>
       <h3 class="ctf-modal-title" id="modal-title">標題</h3>
       <div class="ctf-modal-body" id="modal-body">內容...</div>
     </div>
@@ -99,6 +99,7 @@
 
 
 
+  <script src="dialog.js"></script>
   <script>
     // ======= 工具 =======
     function escapeHtml(str) {
@@ -194,63 +195,6 @@
         be.style.display = unlocked.epilogue ? 'inline-block' : 'none';
         be.disabled = !(storyParts && storyParts.ep);
       }
-    }
-
-    // --- Modal Logic (New) ---
-    function openStoryModal(title, bodyText) {
-      const overlay = document.getElementById('ctf-modal-overlay');
-      const t = document.getElementById('modal-title');
-      const b = document.getElementById('modal-body');
-
-      if (t) t.textContent = title;
-      if (b) b.textContent = bodyText;
-
-      if (overlay) overlay.classList.add('open');
-    }
-
-    function closeStoryModal() {
-      const overlay = document.getElementById('ctf-modal-overlay');
-      if (overlay) overlay.classList.remove('open');
-    }
-
-    // Close on outside click
-    document.getElementById('ctf-modal-overlay')?.addEventListener('click', (e) => {
-      if (e.target.id === 'ctf-modal-overlay') closeStoryModal();
-    });
-
-    function cleanStoryBodyLines(lines) {
-      return lines
-        .filter((line) => {
-          const t = String(line || '').trim();
-          if (!t) return true;
-          if (t.includes('（對應') || t.includes('（可以移除）')) return false;
-          return true;
-        })
-        .join('\n')
-        .trim();
-    }
-
-    function parseStoryMarkdown(md) {
-      const lines = String(md || '').replaceAll('\r\n', '\n').split('\n');
-      const headings = [];
-      for (let i = 0; i < lines.length; i++) {
-        const m = lines[i].match(/^##\s+(.*)\s*$/);
-        if (m) headings.push({ idx: i, title: m[1] });
-      }
-      function extractByKeyword(keyword) {
-        const start = headings.find((h) => h.title.includes(keyword));
-        if (!start) return null;
-        const startLine = start.idx + 1;
-        const next = headings.find((h) => h.idx > start.idx);
-        const endLine = next ? next.idx - 1 : lines.length - 1;
-        const body = cleanStoryBodyLines(lines.slice(startLine, endLine + 1));
-        return { title: start.title, body };
-      }
-      return {
-        ch2: extractByKeyword('第二章'),
-        ch3: extractByKeyword('第三章'),
-        ep: extractByKeyword('尾聲'),
-      };
     }
 
     async function loadStory() {

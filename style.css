@@ -414,6 +414,20 @@ input[type="text"]:focus {
     overflow-y: auto;
 }
 
+.ctf-modal-body blockquote {
+    border-left: 3px solid var(--text-accent);
+    padding: 0.5rem 0 0.5rem 1rem;
+    color: #ccc;
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+}
+
+.ctf-modal-body strong {
+    color: var(--text-accent);
+    font-weight: 700;
+    text-shadow: 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
 .ctf-modal-close {
     position: absolute;
     top: 10px;

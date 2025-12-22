@@ -1,76 +1,118 @@
-(function () {
-  const HOST_ID = 'ctf-dialog';
-  const TITLE_ID = 'ctf-dialog-title';
-  const BODY_ID = 'ctf-dialog-body';
+// ==========================================
+// Shared Dialog & Story Utils
+// Used by index.html and submit.html
+// ==========================================
 
-  function ensureHost() {
-    let host = document.getElementById(HOST_ID);
-    if (host) return host;
+// --- Modal UI ---
+function openStoryModal(title, bodyText) {
+    const overlay = document.getElementById('ctf-modal-overlay');
+    const t = document.getElementById('modal-title');
+    const b = document.getElementById('modal-body');
 
-    host = document.createElement('div');
-    host.id = HOST_ID;
-    host.className = 'modal-host';
-    host.style.display = 'none';
-    host.innerHTML = `
-      <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="${TITLE_ID}">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3 class="cardx-title" id="${TITLE_ID}">提示</h3>
-            <button class="modal-close-btn" type="button" aria-label="關閉" data-ctf-dialog-close>&times;</button>
-          </div>
-          <div class="modal-content">
-            <pre class="story-content" id="${BODY_ID}"></pre>
-          </div>
-        </div>
-      </div>
-    `.trim();
+    if (t) t.textContent = title;
+    if (b) {
+        // Use custom lightweight markdown renderer
+        b.innerHTML = renderMarkdown(bodyText);
+    }
 
-    document.body.appendChild(host);
+    if (overlay) overlay.classList.add('open');
+}
 
-    // 點遮罩關閉
-    host.addEventListener('click', (e) => {
-      if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) close();
-    });
+// Simple Markdown Renderer
+function renderMarkdown(text) {
+    if (!text) return '';
+    return text
+        .split('\n')
+        .map(line => {
+            let processed = line.trim();
+            if(!processed) return '<br>'; // Preserve empty lines as spacing
 
-    // 點 X 關閉
-    host.querySelector('[data-ctf-dialog-close]')?.addEventListener('click', close);
+            // Blockquotes
+            if (processed.startsWith('> ')) {
+                return `<blockquote>${applyInlineStyles(processed.slice(2))}</blockquote>`;
+            }
 
-    // Esc 關閉
+            // Standard paragraphs
+            return `<p>${applyInlineStyles(processed)}</p>`;
+        })
+        .join('');
+}
+
+function applyInlineStyles(text) {
+    // Bold: **text**
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
+function closeStoryModal() {
+    const overlay = document.getElementById('ctf-modal-overlay');
+    if (overlay) overlay.classList.remove('open');
+}
+
+// Bind Global Events for Modal
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('ctf-modal-overlay');
+    const closeBtn = document.querySelector('.ctf-modal-close');
+    
+    // Close on overlay click
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeStoryModal();
+        });
+    }
+    
+    // Close on X button click
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeStoryModal);
+    }
+
+    // Close on Esc key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
+        if (e.key === 'Escape') closeStoryModal();
     });
+});
 
-    return host;
-  }
 
-  function open(title, bodyText) {
-    const host = ensureHost();
-    const titleEl = document.getElementById(TITLE_ID);
-    const bodyEl = document.getElementById(BODY_ID);
+// --- Story Parsing Utils ---
 
-    if (titleEl) titleEl.textContent = title || '提示';
-    if (bodyEl) bodyEl.textContent = bodyText || '';
+function cleanStoryBodyLines(lines) {
+    return lines
+        .filter((line) => {
+            const t = String(line || '').trim();
+            if (!t) return true;
+            if (t.includes('（對應') || t.includes('（可以移除）')) return false;
+            return true;
+        })
+        .join('\n')
+        .trim();
+}
 
-    host.style.display = 'block';
-    document.body.classList.add('modal-open');
-  }
+function parseStoryMarkdown(md) {
+    const lines = String(md || '').replaceAll('\r\n', '\n').split('\n');
+    const headings = [];
+    
+    // 1. Identify all Chapter headings
+    for (let i = 0; i < lines.length; i++) {
+        const m = lines[i].match(/^##\s+(.*)\s*$/);
+        if (m) headings.push({ idx: i, title: m[1] });
+    }
 
-  function close() {
-    const host = document.getElementById(HOST_ID);
-    if (!host) return;
-    host.style.display = 'none';
-    document.body.classList.remove('modal-open');
-  }
+    // 2. Helper to extract content between headings
+    function extractByKeyword(keyword) {
+        const start = headings.find((h) => h.title.includes(keyword));
+        if (!start) return null;
+        
+        const startLine = start.idx + 1;
+        const next = headings.find((h) => h.idx > start.idx);
+        const endLine = next ? next.idx - 1 : lines.length - 1;
+        
+        const body = cleanStoryBodyLines(lines.slice(startLine, endLine + 1));
+        return { title: start.title, body };
+    }
 
-  window.CtfDialog = {
-    open,
-    close,
-    ensureHost,
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureHost);
-  } else {
-    ensureHost();
-  }
-})();
+    return {
+        ch1: extractByKeyword('第一章'), // Added for Index page
+        ch2: extractByKeyword('第二章'),
+        ch3: extractByKeyword('第三章'),
+        ep: extractByKeyword('尾聲'),
+    };
+}
