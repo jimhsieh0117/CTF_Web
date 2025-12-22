@@ -31,6 +31,10 @@
 
           <!-- Submit Form -->
           <section class="inner-card">
+            <div id="loading-overlay">
+              <div class="spinner"></div>
+              <div class="loading-text">解除封印中...</div>
+            </div>
             <div class="card-title">上繳 Flag</div>
             <form id="submit-form" autocomplete="off">
               <div class="form-group">
@@ -367,9 +371,15 @@
       const studentId = document.getElementById('studentId').value.trim();
       const flag = document.getElementById('flag').value.trim();
       const statusEl = document.getElementById('status');
+      const loadingEl = document.getElementById('loading-overlay');
+
       statusEl.style.display = 'none';
+      if (loadingEl) loadingEl.classList.add('visible');
 
       try {
+        // Intentional delay for effect (optional, keep it snappy but visible)
+        // await new Promise(r => setTimeout(r, 800)); 
+
         const res = await fetch('/api/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -383,11 +393,40 @@
         statusEl.className = (json.ok ? 'status-box success' : 'status-box error');
 
         await loadLeaderboard();
-        if (hasQueried) await refreshProgress(studentId);
+
+        if (json.ok) {
+          // Refresh progress and check for story unlock
+          await refreshProgress(studentId);
+
+          // Auto-trigger story dialog based on new solved count
+          if (progressData && typeof progressData.solvedCount === 'number') {
+            const count = progressData.solvedCount;
+            // Check if we just unlocked something. logic:
+            // If count == 1 => unlocked ch2.
+            // If count == 2 => unlocked ch3.
+            // If count == 3 => unlocked ep.
+            // (This assumes linear progression 1->2->3)
+
+            if (count === 1 && storyParts?.ch2) {
+              openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
+            } else if (count === 2 && storyParts?.ch3) {
+              openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
+            } else if (count >= 3 && storyParts?.ep) {
+              openStoryModal(storyParts.ep.title, storyParts.ep.body);
+            }
+          }
+        } else if (hasQueried) {
+          // Even if failed, refresh progress just in case state changed elsewhere? 
+          // Probably not needed but good for consistency if user changed ID manually
+          await refreshProgress(studentId);
+        }
+
       } catch (err) {
         statusEl.textContent = '提交失敗（網路錯誤）';
         statusEl.style.display = 'block';
         statusEl.className = 'status-box error';
+      } finally {
+        if (loadingEl) loadingEl.classList.remove('visible');
       }
     }
 
