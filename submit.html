@@ -319,14 +319,17 @@
         const topClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
         const sid = escapeHtml(e.studentId || '');
         const cnt = Number(e.flagCount ?? e.count ?? 0);
-        // const firstTime = escapeHtml(e.firstTime || e.time || '');
+        const firstTime = escapeHtml(e.firstTime || e.time || '');
 
         listEl.insertAdjacentHTML('beforeend', `
         <li class="rank-item ${topClass}">
           <div class="rank-num">${rank}</div>
           <div class="rank-info">
               <span class="rank-name">${sid}</span>
-              <span class="rank-score">${cnt} Flags</span>
+              <div style="display:flex; gap: 8px; align-items: baseline;">
+                  <span class="rank-score" style="color: var(--text-accent); font-weight:bold;">${cnt} Flags</span>
+                  <span class="rank-time" style="font-size: 0.85em; opacity: 0.6;">${firstTime}</span>
+              </div>
           </div>
         </li>
       `);
