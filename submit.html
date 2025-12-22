@@ -181,25 +181,32 @@
       const b3 = document.getElementById('btn-story-ch3');
       const be = document.getElementById('btn-story-ep');
 
-      const unlocked = progressData?.unlocked || { chapter1: true, chapter2: false, chapter3: false, epilogue: false };
-      const solvedCount = progressData?.solvedCount ?? 0;
+      const solvedCount = Number(progressData?.solvedCount ?? 0);
 
-      // 第一章：尚未解開任何關時顯示
+      // 顯示規則（依需求）：
+      // - 第一關尚未解開：顯示 第一章
+      // - 解開第一關、第二章尚未解鎖：顯示 第一章 + 第二章
+      // - 解開第一、二關、第三章尚未解鎖：顯示 第一章 + 第二章 + 第三章
+      // - 全解開：在第三章後面出現 尾聲
+      const showCh1 = true;
+      const showCh2 = solvedCount >= 1;
+      const showCh3 = solvedCount >= 2;
+      const showEp = solvedCount >= 3;
+
       if (b1) {
-        b1.style.display = (solvedCount === 0) ? 'inline-block' : 'none';
+        b1.style.display = showCh1 ? 'inline-block' : 'none';
         b1.disabled = !(storyParts && storyParts.ch1);
       }
-      // 依進度「出現」按鈕
       if (b2) {
-        b2.style.display = unlocked.chapter2 ? 'inline-block' : 'none';
+        b2.style.display = showCh2 ? 'inline-block' : 'none';
         b2.disabled = !(storyParts && storyParts.ch2);
       }
       if (b3) {
-        b3.style.display = unlocked.chapter3 ? 'inline-block' : 'none';
+        b3.style.display = showCh3 ? 'inline-block' : 'none';
         b3.disabled = !(storyParts && storyParts.ch3);
       }
       if (be) {
-        be.style.display = unlocked.epilogue ? 'inline-block' : 'none';
+        be.style.display = showEp ? 'inline-block' : 'none';
         be.disabled = !(storyParts && storyParts.ep);
       }
     }
@@ -310,10 +317,10 @@
         }
         progressData = json.data;
         const solved = Number(progressData?.solvedCount ?? 0);
-        if (solved <= 0) setStoryStatus('目前進度：第一章（提示）');
-        else if (solved === 1) setStoryStatus('已解鎖：第二章');
-        else if (solved === 2) setStoryStatus('已解鎖：第二章、第三章');
-        else setStoryStatus('已解鎖：全數通關');
+        if (solved <= 0) setStoryStatus('劇情解鎖：第一章');
+        else if (solved === 1) setStoryStatus('劇情解鎖：第一章、第二章');
+        else if (solved === 2) setStoryStatus('劇情解鎖：第一章、第二章、第三章');
+        else setStoryStatus('劇情解鎖：第一章、第二章、第三章、尾聲');
       } catch {
         progressData = null;
         setStoryStatus('進度讀取失敗');
