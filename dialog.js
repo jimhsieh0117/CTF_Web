@@ -4,15 +4,27 @@
 // ==========================================
 
 // --- Modal UI ---
-function openStoryModal(title, bodyText) {
+function openStoryModal(title, bodyText, options = {}) {
     const overlay = document.getElementById('ctf-modal-overlay');
     const t = document.getElementById('modal-title');
     const b = document.getElementById('modal-body');
+    const footer = document.getElementById('modal-footer');
 
     if (t) t.textContent = title;
     if (b) {
         // Use custom lightweight markdown renderer
         b.innerHTML = renderMarkdown(bodyText);
+    }
+
+    // 處理下載按鈕
+    if (footer) {
+        if (options.downloadUrl && options.downloadLabel) {
+            footer.innerHTML = `<a href="${options.downloadUrl}" download class="btn btn-secondary" style="font-size:0.9rem;">${options.downloadLabel}</a>`;
+            footer.style.display = 'block';
+        } else {
+            footer.innerHTML = '';
+            footer.style.display = 'none';
+        }
     }
 
     if (overlay) overlay.classList.add('open');

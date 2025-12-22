@@ -16,6 +16,7 @@
       <button class="ctf-modal-close">×</button>
       <h3 class="ctf-modal-title" id="modal-title">標題</h3>
       <div class="ctf-modal-body" id="modal-body">內容...</div>
+      <div class="ctf-modal-footer" id="modal-footer" style="display:none; text-align:right; margin-top:1rem;"></div>
     </div>
   </div>
 
@@ -376,7 +377,10 @@
           if (submittedFlagIndex === 1 && storyParts?.ch2) {
             openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
           } else if (submittedFlagIndex === 2 && storyParts?.ch3) {
-            openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
+            openStoryModal(storyParts.ch3.title, storyParts.ch3.body, {
+              downloadUrl: '/assets/challenge.mp3',
+              downloadLabel: '重新下載第三關檔案'
+            });
             // 自動下載第三關挑戰檔案
             const downloadLink = document.createElement('a');
             downloadLink.href = '/assets/challenge.mp3';
@@ -415,17 +419,17 @@
       document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
 
       // Story buttons
-      const bindBtn = (id, partKey) => {
+      const bindBtn = (id, partKey, options = {}) => {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', () => {
           if (storyParts && storyParts[partKey]) {
-            openStoryModal(storyParts[partKey].title, storyParts[partKey].body);
+            openStoryModal(storyParts[partKey].title, storyParts[partKey].body, options);
           }
         });
       };
       bindBtn('btn-story-ch1', 'ch1');
       bindBtn('btn-story-ch2', 'ch2');
-      bindBtn('btn-story-ch3', 'ch3');
+      bindBtn('btn-story-ch3', 'ch3', { downloadUrl: '/assets/challenge.mp3', downloadLabel: '重新下載第三關檔案' });
       bindBtn('btn-story-ep', 'ep');
 
       if (studentIdEl) {
