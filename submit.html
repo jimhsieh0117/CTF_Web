@@ -69,6 +69,7 @@
           <section class="inner-card" id="story-card" style="display:none">
             <div class="card-title">劇情解鎖</div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+              <button type="button" class="btn btn-secondary" id="btn-story-ch1" disabled>第一章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ch2" disabled>第二章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ch3" disabled>第三章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ep" disabled>尾聲</button>
@@ -175,12 +176,19 @@
     }
 
     function setStoryButtonsEnabled() {
+      const b1 = document.getElementById('btn-story-ch1');
       const b2 = document.getElementById('btn-story-ch2');
       const b3 = document.getElementById('btn-story-ch3');
       const be = document.getElementById('btn-story-ep');
 
-      const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
+      const unlocked = progressData?.unlocked || { chapter1: true, chapter2: false, chapter3: false, epilogue: false };
+      const solvedCount = progressData?.solvedCount ?? 0;
 
+      // 第一章：尚未解開任何關時顯示
+      if (b1) {
+        b1.style.display = (solvedCount === 0) ? 'inline-block' : 'none';
+        b1.disabled = !(storyParts && storyParts.ch1);
+      }
       // 依進度「出現」按鈕
       if (b2) {
         b2.style.display = unlocked.chapter2 ? 'inline-block' : 'none';
@@ -247,6 +255,7 @@
         return { title: start.title, body };
       }
       return {
+        ch1: extractByKeyword('第一章'),
         ch2: extractByKeyword('第二章'),
         ch3: extractByKeyword('第三章'),
         ep: extractByKeyword('尾聲'),
@@ -301,7 +310,7 @@
         }
         progressData = json.data;
         const solved = Number(progressData?.solvedCount ?? 0);
-        if (solved <= 0) setStoryStatus('尚未解鎖：請先解第一關。');
+        if (solved <= 0) setStoryStatus('目前進度：第一章（提示）');
         else if (solved === 1) setStoryStatus('已解鎖：第二章');
         else if (solved === 2) setStoryStatus('已解鎖：第二章、第三章');
         else setStoryStatus('已解鎖：全數通關');
@@ -451,6 +460,7 @@
           }
         });
       };
+      bindBtn('btn-story-ch1', 'ch1');
       bindBtn('btn-story-ch2', 'ch2');
       bindBtn('btn-story-ch3', 'ch3');
       bindBtn('btn-story-ep', 'ep');
