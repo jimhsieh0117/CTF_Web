@@ -366,23 +366,21 @@
           hasQueried = true;
           await refreshProgress(studentId, true);
 
-          // Auto-trigger story dialog based on new solved count
-          if (progressData && typeof progressData.solvedCount === 'number') {
-            const count = progressData.solvedCount;
-            // Check if we just unlocked something. logic:
-            // If count == 1 => unlocked ch2.
-            // If count == 2 => unlocked ch3.
-            // If count == 3 => unlocked ep.
-            // (This assumes linear progression 1->2->3)
-
-            if (count === 1 && storyParts?.ch2) {
-              openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
-            } else if (count === 2 && storyParts?.ch3) {
-              openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
-            } else if (count >= 3 && storyParts?.ep) {
-              openStoryModal(storyParts.ep.title, storyParts.ep.body);
-            }
+          // Auto-trigger story dialog based on the FLAG just submitted
+          // 綁定具體 flagIndex：
+          // - FLAG1 (flagIndex=1) → 彈出第二章
+          // - FLAG2 (flagIndex=2) → 彈出第三章
+          // - FLAG3 (flagIndex=3) → 彈出尾聲
+          // - 其他（支線 FLAG）→ 不彈主線劇情
+          const submittedFlagIndex = json.flagIndex;
+          if (submittedFlagIndex === 1 && storyParts?.ch2) {
+            openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
+          } else if (submittedFlagIndex === 2 && storyParts?.ch3) {
+            openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
+          } else if (submittedFlagIndex === 3 && storyParts?.ep) {
+            openStoryModal(storyParts.ep.title, storyParts.ep.body);
           }
+          // 支線 FLAG (flagIndex >= 4) 不會彈出主線劇情
         } else if (hasQueried) {
           // Even if failed, refresh progress just in case state changed elsewhere? 
           // Probably not needed but good for consistency if user changed ID manually
