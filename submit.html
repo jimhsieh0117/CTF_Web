@@ -182,17 +182,21 @@
       const b3 = document.getElementById('btn-story-ch3');
       const be = document.getElementById('btn-story-ep');
 
-      const solvedCount = Number(progressData?.solvedCount ?? 0);
+      // 依照解開的具體關卡（flag_index）來解鎖對應劇情
+      const solvedFlags = progressData?.solvedFlags || [];
+      const hasSolved1 = solvedFlags.includes(1); // 解開第一關
+      const hasSolved2 = solvedFlags.includes(2); // 解開第二關
+      const hasSolved3 = solvedFlags.includes(3); // 解開第三關
 
-      // 顯示規則（依需求）：
-      // - 第一關尚未解開：顯示 第一章
-      // - 解開第一關、第二章尚未解鎖：顯示 第一章 + 第二章
-      // - 解開第一、二關、第三章尚未解鎖：顯示 第一章 + 第二章 + 第三章
-      // - 全解開：在第三章後面出現 尾聲
+      // 顯示規則（依指定關卡）：
+      // - 第一章：永遠顯示（第一關提示）
+      // - 第二章：解開第一關後顯示（第二關提示）
+      // - 第三章：解開第二關後顯示（第三關提示）
+      // - 尾聲：解開第三關後顯示
       const showCh1 = true;
-      const showCh2 = solvedCount >= 1;
-      const showCh3 = solvedCount >= 2;
-      const showEp = solvedCount >= 3;
+      const showCh2 = hasSolved1;
+      const showCh3 = hasSolved2;
+      const showEp = hasSolved3;
 
       if (b1) {
         b1.style.display = showCh1 ? 'inline-block' : 'none';
@@ -259,11 +263,13 @@
           return;
         }
         progressData = json.data;
-        const solved = Number(progressData?.solvedCount ?? 0);
-        if (solved <= 0) setStoryStatus('劇情解鎖：第一章');
-        else if (solved === 1) setStoryStatus('劇情解鎖：第一章、第二章');
-        else if (solved === 2) setStoryStatus('劇情解鎖：第一章、第二章、第三章');
-        else setStoryStatus('劇情解鎖：第一章、第二章、第三章、尾聲');
+        // 依照解開的具體關卡來顯示狀態
+        const solvedFlags = progressData?.solvedFlags || [];
+        const parts = ['第一章'];
+        if (solvedFlags.includes(1)) parts.push('第二章');
+        if (solvedFlags.includes(2)) parts.push('第三章');
+        if (solvedFlags.includes(3)) parts.push('尾聲');
+        setStoryStatus('劇情解鎖：' + parts.join('、'));
       } catch {
         progressData = null;
         setStoryStatus('進度讀取失敗');
