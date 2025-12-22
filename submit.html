@@ -369,7 +369,7 @@
           // Auto-trigger story dialog based on the FLAG just submitted
           // 綁定具體 flagIndex：
           // - FLAG1 (flagIndex=1) → 彈出第二章
-          // - FLAG2 (flagIndex=2) → 彈出第三章
+          // - FLAG2 (flagIndex=2) → 彈出第三章 + 自動下載第三關檔案
           // - FLAG3 (flagIndex=3) → 彈出尾聲
           // - 其他（支線 FLAG）→ 不彈主線劇情
           const submittedFlagIndex = json.flagIndex;
@@ -377,6 +377,13 @@
             openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
           } else if (submittedFlagIndex === 2 && storyParts?.ch3) {
             openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
+            // 自動下載第三關挑戰檔案
+            const downloadLink = document.createElement('a');
+            downloadLink.href = '/assets/challenge.mp3';
+            downloadLink.download = 'challenge.mp3';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
           } else if (submittedFlagIndex === 3 && storyParts?.ep) {
             openStoryModal(storyParts.ep.title, storyParts.ep.body);
           }
