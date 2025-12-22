@@ -133,15 +133,22 @@ export async function onRequestPost({ request, env }) {
     const rl2 = await hitRateLimit(env, `sid:${studentId}`, limit);
     if (!rl2.ok) return json({ ok: false, message: rl2.message }, 429);
 
-    // 驗證 Flags
-    const flags = [env.FLAG1, env.FLAG2, env.FLAG3].map((v) =>
+    // 驗證 Flags（主線 FLAG1~3 必須設定；支線 FLAG4+ 可選）
+    const mainFlags = [env.FLAG1, env.FLAG2, env.FLAG3].map((v) =>
       v === undefined || v === null ? "" : String(v)
     );
-    if (flags.some((f) => !f)) {
+    if (mainFlags.some((f) => !f)) {
       return json({ ok: false, message: "伺服器尚未設定 FLAG1/FLAG2/FLAG3" }, 500);
     }
 
-    const flagIndex = flags.findIndex((f) => flag === f) + 1; // 1..3 or 0
+    // 支線 FLAGs（可擴充：FLAG4, FLAG5, ...）
+    const sideFlags = [env.FLAG4, env.FLAG5, env.FLAG6].map((v) =>
+      v === undefined || v === null ? "" : String(v)
+    );
+
+    // 合併所有 flags：index 0~2 對應 FLAG1~3，index 3~5 對應 FLAG4~6
+    const allFlags = [...mainFlags, ...sideFlags];
+    const flagIndex = allFlags.findIndex((f) => f && flag === f) + 1; // 1..6 or 0
 
     const now = Math.floor(Date.now() / 1000);
 
