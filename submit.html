@@ -1,493 +1,440 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="utf-8" />
-  <title>繳交 Flag</title>
+  <title>繳交 Flag | 沉睡的秘密</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="prologue.css">
+  <!-- Note: Removing bootstrap, using custom styles -->
 </head>
 
-<body class="flag-page">
-  <div class="bg-layers" aria-hidden="true">
-    <div class="stars" id="starHost"></div>
-    <div class="waves" aria-hidden="true">
-      <div class="wave-layer layer1"></div>
-      <div class="wave-layer layer2"></div>
-      <div class="wave-layer layer3"></div>
+<body class="submit-page">
+  <!-- Modal Overlay -->
+  <div id="ctf-modal-overlay">
+    <div class="ctf-modal">
+      <button class="ctf-modal-close" onclick="closeStoryModal()">×</button>
+      <h3 class="ctf-modal-title" id="modal-title">標題</h3>
+      <div class="ctf-modal-body" id="modal-body">內容...</div>
     </div>
   </div>
 
-  <main class="content-shell" role="main">
-    <div class="page-header">
-      <h1 class="page-title"><i class="bi bi-flag-fill page-icon"></i> 繳交 Flag</h1>
-      <p class="page-subtitle">輸入學號上繳 Flag 並查看排行榜。</p>
-    </div>
+  <main id="submit-stage">
+    <div class="content-card" style="padding: 2rem; max-width: 1000px; width: 95%;">
 
-    <div class="flagset-grid">
-      <div class="left-col">
-        <section class="cardx">
-          <div class="cardx-header">
-            <h3 class="cardx-title"><i class="bi bi-upload me-2"></i>上繳 Flag</h3>
-            <p class="cardx-subtitle"></p>
-          </div>
+      <h1>繳交 Flag</h1>
+      <p class="secret-hint" style="margin-bottom: 2rem;">上繳學號與真相，揭開下一層的迷霧。</p>
 
-          <div class="cardx-body">
+      <div class="page-grid">
+        <!-- Left Column: Submit & Story -->
+        <div class="left-col">
+
+          <!-- Submit Form -->
+          <section class="inner-card">
+            <div class="card-title">上繳 Flag</div>
             <form id="submit-form" autocomplete="off">
-              <div class="form-grid">
-                <div class="field">
-                  <label class="field-label" for="studentId">學號</label>
-                  <input class="inputx" type="text" id="studentId" name="studentId" placeholder="CXXXXXXXXX" required maxlength="10" pattern="^C\d{9}$" inputmode="text" autocomplete="off">
-                  <small class="form-hint" id="studentId-error" style="display:none"></small>
-                </div>
-                <div class="field">
-                  <label class="field-label">&nbsp;</label>
-                  <button type="button" class="btnx ghost" id="btn-query-story"><i class="bi bi-search me-1"></i>查詢</button>
-                </div>
-                <div class="field field-full">
-                  <label class="field-label" for="flag">Flag</label>
-                  <input class="inputx" type="text" id="flag" name="flag" placeholder="FLAG{...}" required maxlength="200">
-                </div>
+              <div class="form-group">
+                <label for="studentId">學號</label>
+                <input type="text" id="studentId" name="studentId" placeholder="CXXXXXXXXX" required maxlength="10"
+                  pattern="^C\d{9}$" autocomplete="off">
+                <small class="error-msg" id="studentId-error" style="display:none"></small>
               </div>
-              <div class="actions">
-                <button type="submit" class="btnx primary"><i class="bi bi-send-fill me-1"></i>送出</button>
-                <button type="button" class="btnx ghost" id="btn-refresh"><i class="bi bi-arrow-clockwise me-1"></i>刷新排行榜</button>
-                <a class="btnx ghost" href="/"><i class="bi bi-house-door-fill me-1"></i>返回下載頁面</a>
-              </div>
-              <div id="status" class="statusx" aria-live="polite"></div>
-              <small class="form-hint">提示：送出成功後，右側排行榜會自動更新。</small>
-            </form>
-          </div>
-        </section>
 
-        <section class="cardx" id="story-card" style="margin-top:16px; display:none">
-          <div class="cardx-header">
-            <h3 class="cardx-title"><i class="bi bi-book-half me-2"></i>劇情</h3>
-            <p class="cardx-subtitle"></p>
-          </div>
-          <div class="cardx-body">
-            <div class="actions">
-              <button type="button" class="btnx ghost" id="btn-story-ch2" disabled>第二章...</button>
-              <button type="button" class="btnx ghost" id="btn-story-ch3" disabled>第三章....</button>
-              <button type="button" class="btnx ghost" id="btn-story-ep" disabled>尾聲</button>
+              <div class="form-group" style="text-align: right;">
+                <button type="button" class="btn btn-secondary" id="btn-query-story"
+                  style="padding: 0.5rem 1rem; font-size: 0.9rem;">查詢進度</button>
+              </div>
+
+              <div class="form-group">
+                <label for="flag">Flag</label>
+                <input type="text" id="flag" name="flag" placeholder="FLAG{...}" required maxlength="200">
+              </div>
+
+              <div class="form-group" style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button type="submit" class="btn">送出</button>
+                <button type="button" class="btn btn-secondary" id="btn-refresh">刷新榜單</button>
+                <a href="index.html" class="btn btn-secondary" style="margin-left: auto;">返回首頁</a>
+              </div>
+
+              <div id="status" class="status-box"></div>
+            </form>
+          </section>
+
+          <!-- Story Section -->
+          <section class="inner-card" id="story-card" style="display:none">
+            <div class="card-title">劇情解鎖</div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+              <button type="button" class="btn btn-secondary" id="btn-story-ch2" disabled>第二章</button>
+              <button type="button" class="btn btn-secondary" id="btn-story-ch3" disabled>第三章</button>
+              <button type="button" class="btn btn-secondary" id="btn-story-ep" disabled>尾聲</button>
             </div>
             <small class="form-hint" id="story-status">請先輸入學號以載入解鎖進度。</small>
-          </div>
-        </section>
-      </div>
+          </section>
 
-      <div class="right-col">
-        <section class="cardx rank-card">
-          <div class="cardx-header with-action">
-            <div>
-              <h6 class="cardx-title"><i class="bi bi-trophy-fill me-2"></i>總排行榜（依繳交數排序）</h6>
-              <p class="cardx-subtitle"></p>
-            </div>
-          </div>
-          <div class="cardx-body compact">
-            <ol class="rank-list compact" id="rank-overall"></ol>
-          </div>
-        </section>
+        </div>
 
-        <!-- 完整榜單（如果你原本就有 Modal / 區塊，用這個 id 就能渲染） -->
-        <div style="display:none">
-          <ol class="rank-list" id="rank-overall-full"></ol>
+        <!-- Right Column: Leaderboard -->
+        <div class="right-col">
+          <section class="inner-card">
+            <div class="card-title">傳承榜單</div>
+            <ol class="rank-list" id="rank-overall">
+              <!-- Items injected by JS -->
+              <li class="rank-item"><span class="rank-num">-</span> 載入中...</li>
+            </ol>
+          </section>
+
+          <div style="display:none">
+            <ol id="rank-overall-full"></ol>
+          </div>
         </div>
       </div>
+
     </div>
   </main>
 
-  <script src="/dialog.js" defer></script>
+
 
   <script>
-  // ======= 工具 =======
-  function escapeHtml(str) {
-    return String(str ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-  }
-
-  function unwrapData(json) {
-    if (!json || typeof json !== 'object') return [];
-    if (json.ok && Array.isArray(json.data)) return json.data;
-    return [];
-  }
-
-  // ======= 劇情（第二章 / 第三章 / 尾聲） =======
-  const LS_STUDENT_ID_KEY = 'ctf_studentId';
-  let storyParts = null; // { ch2:{title,body}, ch3:{...}, ep:{...} }
-  let progressData = null; // { solvedCount, unlocked:{...} }
-  let hasQueried = false;
-
-  function isValidStudentId(studentId) {
-    return /^C\d{9}$/.test(String(studentId || '').trim());
-  }
-
-  function setStudentIdError(text) {
-    const el = document.getElementById('studentId-error');
-    if (!el) return;
-    if (!text) {
-      el.textContent = '';
-      el.style.display = 'none';
-      return;
-    }
-    el.textContent = text;
-    el.style.display = 'block';
-  }
-
-  function setQueryButtonVisible(visible) {
-    const btn = document.getElementById('btn-query-story');
-    if (!btn) return;
-    btn.style.display = visible ? '' : 'none';
-  }
-
-  function updateStudentIdUi(studentId) {
-    const sid = String(studentId || '').trim();
-    if (!sid) {
-      setStudentIdError('');
-      setQueryButtonVisible(false);
-      setStoryVisible(false);
-      return;
-    }
-    if (!isValidStudentId(sid)) {
-      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字）');
-      setQueryButtonVisible(false);
-      setStoryVisible(false);
-      return;
-    }
-    setStudentIdError('');
-    setQueryButtonVisible(true);
-  }
-
-  function setStoryVisible(visible) {
-    const card = document.getElementById('story-card');
-    if (!card) return;
-    card.style.display = visible ? '' : 'none';
-    if (!visible) closeStoryModal();
-  }
-
-  function setStoryStatus(text) {
-    const el = document.getElementById('story-status');
-    if (el) el.textContent = text;
-  }
-
-  function setStoryButtonsEnabled() {
-    const b2 = document.getElementById('btn-story-ch2');
-    const b3 = document.getElementById('btn-story-ch3');
-    const be = document.getElementById('btn-story-ep');
-
-    const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
-
-    // 依進度「出現」按鈕（不是 disabled 顯示）
-    if (b2) {
-      b2.style.display = unlocked.chapter2 ? '' : 'none';
-      b2.disabled = !(storyParts && storyParts.ch2);
-    }
-    if (b3) {
-      b3.style.display = unlocked.chapter3 ? '' : 'none';
-      b3.disabled = !(storyParts && storyParts.ch3);
-    }
-    if (be) {
-      be.style.display = unlocked.epilogue ? '' : 'none';
-      be.disabled = !(storyParts && storyParts.ep);
-    }
-  }
-
-  function openStoryModal(title, bodyText) {
-    if (window.CtfDialog && typeof window.CtfDialog.open === 'function') {
-      window.CtfDialog.open(title || '劇情', bodyText || '');
-    }
-  }
-
-  function closeStoryModal() {
-    if (window.CtfDialog && typeof window.CtfDialog.close === 'function') {
-      window.CtfDialog.close();
-    }
-  }
-
-  function cleanStoryBodyLines(lines) {
-    return lines
-      .filter((line) => {
-        const t = String(line || '').trim();
-        if (!t) return true;
-        // 移除出題者註記（避免直接暴雷）
-        if (t.includes('（對應') || t.includes('（可以移除）')) return false;
-        return true;
-      })
-      .join('\n')
-      .trim();
-  }
-
-  function parseStoryMarkdown(md) {
-    const lines = String(md || '').replaceAll('\r\n', '\n').split('\n');
-
-    const headings = [];
-    for (let i = 0; i < lines.length; i++) {
-      const m = lines[i].match(/^##\s+(.*)\s*$/);
-      if (m) headings.push({ idx: i, title: m[1] });
+    // ======= 工具 =======
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
     }
 
-    function extractByKeyword(keyword) {
-      const start = headings.find((h) => h.title.includes(keyword));
-      if (!start) return null;
-      const startLine = start.idx + 1;
-      const next = headings.find((h) => h.idx > start.idx);
-      const endLine = next ? next.idx - 1 : lines.length - 1;
-      const body = cleanStoryBodyLines(lines.slice(startLine, endLine + 1));
-      return { title: start.title, body };
+    function unwrapData(json) {
+      if (!json || typeof json !== 'object') return [];
+      if (json.ok && Array.isArray(json.data)) return json.data;
+      return [];
     }
 
-    return {
-      ch2: extractByKeyword('第二章'),
-      ch3: extractByKeyword('第三章'),
-      ep: extractByKeyword('尾聲'),
-    };
-  }
+    // ======= 劇情（第二章 / 第三章 / 尾聲） =======
+    const LS_STUDENT_ID_KEY = 'ctf_studentId';
+    let storyParts = null;
+    let progressData = null;
+    let hasQueried = false;
 
-  async function loadStory() {
-    try {
-      const res = await fetch('/CTF_story.md', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const md = await res.text();
-      storyParts = parseStoryMarkdown(md);
-      if (!storyParts?.ch2 || !storyParts?.ch3 || !storyParts?.ep) {
-        setStoryStatus('劇情載入成功，但章節標題找不到（請確認 CTF_story.md）。');
-      }
-    } catch {
-      storyParts = null;
-      setStoryStatus('劇情載入失敗（找不到 /CTF_story.md）。');
-    }
-    setStoryButtonsEnabled();
-  }
-
-  async function refreshProgress(studentId) {
-    const sid = String(studentId || '').trim();
-    if (!sid) {
-      progressData = null;
-      setStoryVisible(false);
-      setStoryStatus('請先輸入學號，並按「查詢」。');
-      setStoryButtonsEnabled();
-      return;
+    function isValidStudentId(studentId) {
+      return /^C\d{9}$/.test(String(studentId || '').trim());
     }
 
-    if (!isValidStudentId(sid)) {
-      progressData = null;
-      setStoryVisible(false);
-      setStoryStatus('');
-      setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字）');
-      setQueryButtonVisible(false);
-      setStoryButtonsEnabled();
-      return;
-    }
-
-    // 必須先按下查詢才顯示劇情
-    if (!hasQueried) {
-      progressData = null;
-      setStoryVisible(false);
-      setStoryStatus('請按「查詢」以載入解鎖進度。');
-      setStoryButtonsEnabled();
-      return;
-    }
-
-    setStoryVisible(true);
-
-    try {
-      const res = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: sid }),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.ok) {
-        progressData = null;
-        setStoryStatus(json.message || '進度讀取失敗');
-        setStoryButtonsEnabled();
+    function setStudentIdError(text) {
+      const el = document.getElementById('studentId-error');
+      if (!el) return;
+      if (!text) {
+        el.textContent = '';
+        el.style.display = 'none';
         return;
       }
-
-      progressData = json.data;
-      const solved = Number(progressData?.solvedCount ?? 0);
-      if (solved <= 0) setStoryStatus('尚未解鎖：請先解第一關。');
-      else if (solved === 1) setStoryStatus('已解鎖：第二章');
-      else if (solved === 2) setStoryStatus('已解鎖：第二章、第三章');
-      else setStoryStatus('已解鎖：第二章、第三章、尾聲');
-    } catch {
-      progressData = null;
-      setStoryStatus('進度讀取失敗');
+      el.textContent = text;
+      el.style.display = 'block';
     }
 
-    setStoryButtonsEnabled();
-  }
-
-  // ✅ 改這裡：排行榜顯示「FLAG數」＋「最早提交」＋ 正確排序
-  function renderRankList(listEl, data, limit = 10) {
-    listEl.innerHTML = '';
-    if (!Array.isArray(data) || data.length === 0) {
-      listEl.innerHTML = '<li class="rank-empty">目前沒有資料</li>';
-      return;
+    function setQueryButtonVisible(visible) {
+      const btn = document.getElementById('btn-query-story');
+      if (!btn) return;
+      btn.style.display = visible ? 'inline-block' : 'none';
     }
 
-    data.slice(0, limit).forEach((e, i) => {
-      const rank = i + 1;
-      const topClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
-      const sid  = escapeHtml(e.studentId || '');
-      const cnt  = Number(e.flagCount ?? e.count ?? 0);
-      const firstTime = escapeHtml(e.firstTime || e.time || '');
-
-      listEl.insertAdjacentHTML('beforeend', `
-        <li class="rank-item ${topClass}">
-          <div class="rank-num">${rank}</div>
-          <div class="rank-main">
-            <div class="rank-line">
-              <span class="rank-name">${sid}</span>
-              <span class="rank-pill"><i class="bi bi-flag-fill"></i> ${cnt}</span>
-              <span class="rank-pill"><i class="bi bi-clock-history"></i> ${firstTime}</span>
-            </div>
-          </div>
-        </li>
-      `);
-    });
-  }
-
-  async function loadLeaderboard() {
-    const overallTopEl  = document.getElementById('rank-overall');
-    const overallFullEl = document.getElementById('rank-overall-full');
-
-    try {
-      const res = await fetch('/api/leaderboard', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      const json = await res.json();
-      const data = unwrapData(json);
-
-      // ✅ 排名規則：繳交數量越多越前；同數量時，越早提交越前
-      data.sort((a, b) => {
-        const cntA = Number(a.flagCount ?? a.count ?? 0);
-        const cntB = Number(b.flagCount ?? b.count ?? 0);
-        if (cntA !== cntB) return cntB - cntA;
-
-        const tA = String(a.firstTime || a.time || '');
-        const tB = String(b.firstTime || b.time || '');
-        return tA.localeCompare(tB); // 越早越小
-      });
-
-      renderRankList(overallTopEl,  data, 10);
-      if (overallFullEl) renderRankList(overallFullEl, data, 999);
-      return;
-    } catch (err) {
-      console.warn('loadLeaderboard failed, using demo data:', err);
-
-      if (overallTopEl) {
-        overallTopEl.innerHTML = '<li class="rank-empty">排行榜載入失敗，請稍後再試</li>';
-      }
-      if (overallFullEl) {
-        overallFullEl.innerHTML = '<li class="rank-empty">排行榜載入失敗，請稍後再試</li>';
-      }
-    }
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const studentId = document.getElementById('studentId').value.trim();
-    const flag = document.getElementById('flag').value.trim();
-
-    try {
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, flag })
-      });
-
-      const json = await res.json().catch(() => ({}));
-      const msg = json.message || '提交完成';
-
-      const statusEl = document.getElementById('status');
-      statusEl.textContent = msg;
-      statusEl.style.display = 'block';
-      statusEl.className = (json.ok ? 'statusx success' : 'statusx error');
-
-      await loadLeaderboard();
-      if (hasQueried) await refreshProgress(studentId);
-    } catch (err) {
-      const statusEl = document.getElementById('status');
-      statusEl.textContent = '提交失敗';
-      statusEl.style.display = 'block';
-      statusEl.className = 'statusx error';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const studentIdEl = document.getElementById('studentId');
-    const savedSid = localStorage.getItem(LS_STUDENT_ID_KEY);
-    if (studentIdEl && savedSid) studentIdEl.value = savedSid;
-
-    // 一律先隱藏：必須按「查詢」才顯示
-    setStoryVisible(false);
-    setStoryStatus('請先輸入學號，並按「查詢」。');
-    updateStudentIdUi(studentIdEl ? studentIdEl.value : '');
-
-    document.getElementById('submit-form').addEventListener('submit', handleSubmit);
-    document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
-
-    // 劇情：按鈕
-    document.getElementById('btn-story-ch2').addEventListener('click', () => {
-      if (!storyParts?.ch2) return;
-      openStoryModal(storyParts.ch2.title, storyParts.ch2.body);
-    });
-    document.getElementById('btn-story-ch3').addEventListener('click', () => {
-      if (!storyParts?.ch3) return;
-      openStoryModal(storyParts.ch3.title, storyParts.ch3.body);
-    });
-    document.getElementById('btn-story-ep').addEventListener('click', () => {
-      if (!storyParts?.ep) return;
-      openStoryModal(storyParts.ep.title, storyParts.ep.body);
-    });
-
-    // 進度：studentId 變更就保存並刷新（簡單 debounce）
-    if (studentIdEl) {
-      studentIdEl.addEventListener('input', () => {
-        localStorage.setItem(LS_STUDENT_ID_KEY, studentIdEl.value.trim());
-        // 變更學號後，需重新按查詢
-        hasQueried = false;
-        progressData = null;
-        setStoryVisible(false);
-        setStoryStatus('請按「查詢」以載入解鎖進度。');
-        setStoryButtonsEnabled();
-        updateStudentIdUi(studentIdEl.value);
-      });
-    }
-
-    document.getElementById('btn-query-story').addEventListener('click', async () => {
-      const sid = studentIdEl ? studentIdEl.value.trim() : '';
+    function updateStudentIdUi(studentId) {
+      const sid = String(studentId || '').trim();
       if (!sid) {
+        setStudentIdError('');
+        setQueryButtonVisible(false);
         setStoryVisible(false);
-        setStoryStatus('請先輸入學號，再按查詢。');
         return;
       }
       if (!isValidStudentId(sid)) {
-        hasQueried = false;
-        progressData = null;
+        setStudentIdError('學號格式不正確（需為 C 加上 9 碼數字）');
+        setQueryButtonVisible(false);
         setStoryVisible(false);
-        setStoryStatus('');
-        updateStudentIdUi(sid);
         return;
       }
-      localStorage.setItem(LS_STUDENT_ID_KEY, sid);
-      hasQueried = true;
-      await refreshProgress(sid);
+      setStudentIdError('');
+      setQueryButtonVisible(true);
+    }
+
+    function setStoryVisible(visible) {
+      const card = document.getElementById('story-card');
+      if (!card) return;
+      card.style.display = visible ? 'block' : 'none'; // Block for inner-card
+      if (!visible) closeStoryModal();
+    }
+
+    function setStoryStatus(text) {
+      const el = document.getElementById('story-status');
+      if (el) el.textContent = text;
+    }
+
+    function setStoryButtonsEnabled() {
+      const b2 = document.getElementById('btn-story-ch2');
+      const b3 = document.getElementById('btn-story-ch3');
+      const be = document.getElementById('btn-story-ep');
+
+      const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
+
+      // 依進度「出現」按鈕
+      if (b2) {
+        b2.style.display = unlocked.chapter2 ? 'inline-block' : 'none';
+        b2.disabled = !(storyParts && storyParts.ch2);
+      }
+      if (b3) {
+        b3.style.display = unlocked.chapter3 ? 'inline-block' : 'none';
+        b3.disabled = !(storyParts && storyParts.ch3);
+      }
+      if (be) {
+        be.style.display = unlocked.epilogue ? 'inline-block' : 'none';
+        be.disabled = !(storyParts && storyParts.ep);
+      }
+    }
+
+    // --- Modal Logic (New) ---
+    function openStoryModal(title, bodyText) {
+      const overlay = document.getElementById('ctf-modal-overlay');
+      const t = document.getElementById('modal-title');
+      const b = document.getElementById('modal-body');
+
+      if (t) t.textContent = title;
+      if (b) b.textContent = bodyText;
+
+      if (overlay) overlay.classList.add('open');
+    }
+
+    function closeStoryModal() {
+      const overlay = document.getElementById('ctf-modal-overlay');
+      if (overlay) overlay.classList.remove('open');
+    }
+
+    // Close on outside click
+    document.getElementById('ctf-modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target.id === 'ctf-modal-overlay') closeStoryModal();
     });
 
-    loadLeaderboard();
-    loadStory();
-    // 不自動查詢進度：必須按下查詢按鈕
-    refreshProgress(studentIdEl ? studentIdEl.value : '');
-  });
+    function cleanStoryBodyLines(lines) {
+      return lines
+        .filter((line) => {
+          const t = String(line || '').trim();
+          if (!t) return true;
+          if (t.includes('（對應') || t.includes('（可以移除）')) return false;
+          return true;
+        })
+        .join('\n')
+        .trim();
+    }
+
+    function parseStoryMarkdown(md) {
+      const lines = String(md || '').replaceAll('\r\n', '\n').split('\n');
+      const headings = [];
+      for (let i = 0; i < lines.length; i++) {
+        const m = lines[i].match(/^##\s+(.*)\s*$/);
+        if (m) headings.push({ idx: i, title: m[1] });
+      }
+      function extractByKeyword(keyword) {
+        const start = headings.find((h) => h.title.includes(keyword));
+        if (!start) return null;
+        const startLine = start.idx + 1;
+        const next = headings.find((h) => h.idx > start.idx);
+        const endLine = next ? next.idx - 1 : lines.length - 1;
+        const body = cleanStoryBodyLines(lines.slice(startLine, endLine + 1));
+        return { title: start.title, body };
+      }
+      return {
+        ch2: extractByKeyword('第二章'),
+        ch3: extractByKeyword('第三章'),
+        ep: extractByKeyword('尾聲'),
+      };
+    }
+
+    async function loadStory() {
+      try {
+        const res = await fetch('/CTF_story.md', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const md = await res.text();
+        storyParts = parseStoryMarkdown(md);
+      } catch {
+        storyParts = null;
+        setStoryStatus('劇情載入失敗。');
+      }
+      setStoryButtonsEnabled();
+    }
+
+    async function refreshProgress(studentId) {
+      const sid = String(studentId || '').trim();
+      if (!sid) {
+        setStoryVisible(false);
+        setStoryStatus('請先輸入學號，並按「查詢進度」。');
+        return;
+      }
+      if (!isValidStudentId(sid)) {
+        setStoryVisible(false);
+        setStudentIdError('學號格式不正確');
+        return;
+      }
+      if (!hasQueried) {
+        setStoryVisible(false);
+        setStoryStatus('請按「查詢進度」以載入。');
+        return;
+      }
+
+      setStoryVisible(true);
+
+      try {
+        const res = await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId: sid }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) {
+          progressData = null;
+          setStoryStatus(json.message || '進度讀取失敗');
+          setStoryButtonsEnabled();
+          return;
+        }
+        progressData = json.data;
+        const solved = Number(progressData?.solvedCount ?? 0);
+        if (solved <= 0) setStoryStatus('尚未解鎖：請先解第一關。');
+        else if (solved === 1) setStoryStatus('已解鎖：第二章');
+        else if (solved === 2) setStoryStatus('已解鎖：第二章、第三章');
+        else setStoryStatus('已解鎖：全數通關');
+      } catch {
+        progressData = null;
+        setStoryStatus('進度讀取失敗');
+      }
+      setStoryButtonsEnabled();
+    }
+
+    function renderRankList(listEl, data, limit = 10) {
+      listEl.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        listEl.innerHTML = '<li class="rank-item" style="justify-content:center; opacity:0.5;">目前沒有資料</li>';
+        return;
+      }
+
+      data.slice(0, limit).forEach((e, i) => {
+        const rank = i + 1;
+        const topClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+        const sid = escapeHtml(e.studentId || '');
+        const cnt = Number(e.flagCount ?? e.count ?? 0);
+        // const firstTime = escapeHtml(e.firstTime || e.time || '');
+
+        listEl.insertAdjacentHTML('beforeend', `
+        <li class="rank-item ${topClass}">
+          <div class="rank-num">${rank}</div>
+          <div class="rank-info">
+              <span class="rank-name">${sid}</span>
+              <span class="rank-score">${cnt} Flags</span>
+          </div>
+        </li>
+      `);
+      });
+    }
+
+    async function loadLeaderboard() {
+      const overallTopEl = document.getElementById('rank-overall');
+      const overallFullEl = document.getElementById('rank-overall-full');
+
+      try {
+        const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        const data = unwrapData(json);
+
+        data.sort((a, b) => {
+          const cntA = Number(a.flagCount ?? a.count ?? 0);
+          const cntB = Number(b.flagCount ?? b.count ?? 0);
+          if (cntA !== cntB) return cntB - cntA;
+          const tA = String(a.firstTime || a.time || '');
+          const tB = String(b.firstTime || b.time || '');
+          return tA.localeCompare(tB);
+        });
+
+        renderRankList(overallTopEl, data, 20); // Show more items in this vertical list
+        if (overallFullEl) renderRankList(overallFullEl, data, 999);
+      } catch (err) {
+        if (overallTopEl) overallTopEl.innerHTML = '<li class="rank-item">排行榜暫時無法載入</li>';
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const studentId = document.getElementById('studentId').value.trim();
+      const flag = document.getElementById('flag').value.trim();
+      const statusEl = document.getElementById('status');
+      statusEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId, flag })
+        });
+        const json = await res.json().catch(() => ({}));
+        const msg = json.message || '提交完成';
+
+        statusEl.textContent = msg;
+        statusEl.style.display = 'block';
+        statusEl.className = (json.ok ? 'status-box success' : 'status-box error');
+
+        await loadLeaderboard();
+        if (hasQueried) await refreshProgress(studentId);
+      } catch (err) {
+        statusEl.textContent = '提交失敗（網路錯誤）';
+        statusEl.style.display = 'block';
+        statusEl.className = 'status-box error';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const studentIdEl = document.getElementById('studentId');
+      const savedSid = localStorage.getItem(LS_STUDENT_ID_KEY);
+      if (studentIdEl && savedSid) studentIdEl.value = savedSid;
+
+      setStoryVisible(false);
+      updateStudentIdUi(studentIdEl ? studentIdEl.value : '');
+
+      document.getElementById('submit-form').addEventListener('submit', handleSubmit);
+      document.getElementById('btn-refresh').addEventListener('click', loadLeaderboard);
+
+      // Story buttons
+      const bindBtn = (id, partKey) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => {
+          if (storyParts && storyParts[partKey]) {
+            openStoryModal(storyParts[partKey].title, storyParts[partKey].body);
+          }
+        });
+      };
+      bindBtn('btn-story-ch2', 'ch2');
+      bindBtn('btn-story-ch3', 'ch3');
+      bindBtn('btn-story-ep', 'ep');
+
+      if (studentIdEl) {
+        studentIdEl.addEventListener('input', () => {
+          localStorage.setItem(LS_STUDENT_ID_KEY, studentIdEl.value.trim());
+          hasQueried = false;
+          setStoryVisible(false);
+          setStoryStatus('請按「查詢進度」以載入。');
+          updateStudentIdUi(studentIdEl.value);
+        });
+      }
+
+      document.getElementById('btn-query-story').addEventListener('click', async () => {
+        const sid = studentIdEl ? studentIdEl.value.trim() : '';
+        if (!sid) return;
+        localStorage.setItem(LS_STUDENT_ID_KEY, sid);
+        hasQueried = true;
+        await refreshProgress(sid);
+      });
+
+      loadLeaderboard();
+      loadStory();
+      if (savedSid) refreshProgress(savedSid);
+    });
   </script>
 </body>
+
 </html>
