@@ -374,7 +374,7 @@
       const statusEl = document.getElementById('status');
       const loadingEl = document.getElementById('loading-overlay');
 
-      statusEl.style.display = 'none';
+      // statusEl.style.display = 'none';
       if (loadingEl) loadingEl.classList.add('visible');
 
       try {
@@ -387,7 +387,7 @@
           body: JSON.stringify({ studentId, flag })
         });
         const json = await res.json().catch(() => ({}));
-        const msg = json.message || '提交完成';
+        const msg = json.message || '錯誤';
 
         statusEl.textContent = msg;
         statusEl.style.display = 'block';
