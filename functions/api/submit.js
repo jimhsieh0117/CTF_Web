@@ -190,7 +190,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (newlyAccepted > 0) {
-      return json({ ok: true, message: `真相已揭露，封印解除！` });
+      return json({ ok: true, message: `真相已揭露，封印解除` });
     }
     return json({ ok: false, message: `此處的迷霧已被驅散（已繳交過）` });
   } catch (e) {
