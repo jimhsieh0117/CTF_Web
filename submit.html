@@ -69,6 +69,7 @@
           <section class="inner-card" id="story-card" style="display:none">
             <div class="card-title">劇情解鎖</div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+              <button type="button" class="btn btn-secondary" id="btn-story-ch1" disabled>第一章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ch2" disabled>第二章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ch3" disabled>第三章</button>
               <button type="button" class="btn btn-secondary" id="btn-story-ep" disabled>尾聲</button>
@@ -176,13 +177,19 @@
     }
 
     function setStoryButtonsEnabled() {
+      const b1 = document.getElementById('btn-story-ch1');
       const b2 = document.getElementById('btn-story-ch2');
       const b3 = document.getElementById('btn-story-ch3');
       const be = document.getElementById('btn-story-ep');
 
-      const unlocked = progressData?.unlocked || { chapter2: false, chapter3: false, epilogue: false };
+      const unlocked = progressData?.unlocked || { chapter1: true, chapter2: false, chapter3: false, epilogue: false };
+      const solvedCount = progressData?.solvedCount ?? 0;
 
       // 依進度「出現」按鈕
+      if (b1) {
+        b1.style.display = (solvedCount === 0) ? 'inline-block' : 'none';
+        b1.disabled = !(storyParts && storyParts.ch1);
+      }
       if (b2) {
         b2.style.display = unlocked.chapter2 ? 'inline-block' : 'none';
         b2.disabled = !(storyParts && storyParts.ch2);
@@ -395,6 +402,7 @@
           }
         });
       };
+      bindBtn('btn-story-ch1', 'ch1');
       bindBtn('btn-story-ch2', 'ch2');
       bindBtn('btn-story-ch3', 'ch3');
       bindBtn('btn-story-ep', 'ep');
