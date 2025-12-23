@@ -52,7 +52,7 @@ body::before {
     background: var(--card-bg);
     padding: 3rem 4rem;
     border: 1px solid #333;
-    width: 95%;
+    width: 100%;
     border-radius: 4px;
     box-shadow: 0 20px 50px var(--shadow-color);
     position: relative;
