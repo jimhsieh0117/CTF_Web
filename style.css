@@ -456,7 +456,7 @@ body.submit-page #stage,
 body.submit-page #submit-stage {
     display: flex;
     justify-content: center;
-    max-width: 70vw;
+    max-width: 80vw;
     min-width: 535px;
     margin: 0 auto;
     transform: none !important;
